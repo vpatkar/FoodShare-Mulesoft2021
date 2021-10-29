@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
+	
+	<flow name="post-attachment-flow" doc:id="dc72a8ab-ddc2-4609-af11-32c61ff12f04" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="593f54aa-f853-438a-a79d-76e32b6f334a" message="START post-attachment-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="b5136560-9a59-47b9-b334-ef128179a854" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[payload]]></ee:set-variable>
+				<ee:set-variable variableName="vFileName" ><![CDATA[attributes.headers.'fileName']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<s3:create-object doc:name="Upload Attachment on S3" doc:id="e45d9f18-70e2-4b6d-86c3-90d5188761a9" config-ref="Amazon_S3_Configuration" bucketName="${secure::aws.s3.image-bucket}" key="#[vars.vFileName]" target="vS3UploadResponse"/>
+		<ee:transform doc:name="DW Map - vS3UploadResponse to JSON" doc:id="3b5f2da0-3c74-4258-a1bb-8bfd152fa738" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vS3UploadResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vS3UploadResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[(now() + |P6D|) as LocalDateTime]" doc:name="vExpirationDate" doc:id="61e022d1-b558-42af-b859-c7c5b5bc559a" variableName="vExpirationDate"/>
+		<s3:create-object-presigned-uri doc:name="Create object presigned uri" doc:id="26be2a79-c943-46cb-8e7b-6cf2b23ee57d" config-ref="Amazon_S3_Configuration" bucketName="${secure::aws.s3.image-bucket}" key="#[vars.vFileName]" target="vPresignedURLResponse" method="GET" expiration="#[vars.vExpirationDate]"/>
+		<ee:transform doc:name="DW Map - Success Response" doc:id="8ef1fb37-6d6a-49d3-b543-57c32094d2e4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Attachment Uploaded Successfully",
+	"data": {
+		"publicURL": vars.vPresignedURLResponse
+	}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO - Success Response" doc:id="915a48fd-cc2a-47f8-aa3d-ebdb5221b1f2" message="#[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="8c559216-2c2c-4efc-b590-ebd783cd8248" message="END post-attachment-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="62534bfe-76db-4039-845b-7e0d03a3e8cb" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="0d1940d8-cafc-4869-80ba-dc3aa6bc1415"
+					message="Error occurred in uploading attachment to S3 - #[error.description]" />
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="f7dd37e1-f478-4627-8717-12a3e555ee27">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Uplaod Attachment Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

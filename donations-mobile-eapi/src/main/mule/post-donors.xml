@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="post-donors-flow" doc:id="d3ae119e-a258-483f-88ba-672a0cafcd25" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="77e1369c-526c-4d90-b5eb-9444a53b2423" message="START post-donors-flow"/>
+		<http:request method="POST" doc:name="donors-sapi : Register new Donor" doc:id="39b8707c-2af1-4dd8-a2b3-ab8b5c287c7a" config-ref="HTTP_Request_Donor_SAPI_configuration" path="${donor-sapi.post-donor-details-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}"/>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="3e892aba-6479-464c-8b43-d44c737a1b43" message="API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="3c34a68e-93b8-46e4-8021-ec316d96379c" message="END post-donors-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e961a766-8f6a-4add-92b6-36a38d9a7b11" >
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred" doc:id="1b499418-77f6-468f-a48e-58c17f78aae4" message="Error occurred in registering a new Donor in the system - #[error.description]"/>
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="25ee70eb-a729-4657-a883-a45ba91a2a40">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor registration failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

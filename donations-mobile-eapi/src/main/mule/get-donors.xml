@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="get-donors-flow" doc:id="6002742d-8878-471d-a45a-962724ff8eab" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="ac3a3ed0-faf1-4dce-9399-981340b6c863" message="START get-donors-flow"/>
+		<http:request method="GET" doc:name="donors-sapi : GET Donor Details" doc:id="ea6e53a7-3c6d-468d-a360-502cb4bdf36d" config-ref="HTTP_Request_Donor_SAPI_configuration" path="${donor-sapi.get-donor-details-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donorID" : attributes.uriParams.'donorID'
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="b8cafd03-08e8-4711-aae0-6c6eb13e61e1" message="API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="bd5cbc18-0c0e-4feb-bbbe-9a13147611f8" message="END get-donors-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4941b934-58bf-4c97-97d5-d9dccf89b544" >
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred" doc:id="f6bb4409-bf19-406c-a68d-fee8135f567b" message="Error occurred in fetching Donor Details - #[error.description]"/>
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="acdd47e4-d0b6-4c9e-a42f-822b5523c224">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor details could not be fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

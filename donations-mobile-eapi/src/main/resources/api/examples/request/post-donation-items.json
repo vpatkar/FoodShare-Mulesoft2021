@@ -1,0 +1,15 @@
+{
+  "itemTitle": "Mava Cake",
+  "itemShortDesc": "Awsome Mava Cake available for you",
+  "dateCreated": "24-01-2021T12:12:00Z",
+  "status": "Submitted",
+  "itemExpiryDate": "25-01-2021T12:12:00Z",
+  "audioFilePath": "https://abc.com/asdsd/asddfd",
+  "attachments": [
+    {
+      "fileName": "caramelCustard.jpg",
+      "mimeType": "image/jpeg",
+      "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+    }
+  ]
+}

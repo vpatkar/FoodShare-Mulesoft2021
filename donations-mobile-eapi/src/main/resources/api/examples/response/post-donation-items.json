@@ -1,0 +1,7 @@
+{
+  "status": "S",
+  "message": "Donation Item submitted Successfully",
+  "data": {
+    "donationItemID": "DI101"
+  }
+}

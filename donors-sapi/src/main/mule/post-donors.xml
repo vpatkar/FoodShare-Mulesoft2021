@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="post-donors-flow" doc:id="1541e4de-b73a-47f0-a4d7-adb73f161e35" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="fa782925-fb07-4aa0-a057-9488541228b0" message="START  post-donors-flow"/>
+		<ee:transform doc:name="DW Map : Donor JSON to Database" doc:id="2beb4fe9-bede-44bb-9054-69495c711d5f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonorPayloadRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	deviceToken: payload.donorDeviceToken,
+	firstName: payload.firstName,
+	lastName: payload.lastName,
+	mobileNumber: payload.mobileNumber,
+	emailAddress: payload.emailAddress,
+	establishmentName: payload.establishmentName,
+	establishmentRegistrationNumber: payload.establishmentRegistrationNumber,
+	establishmentLogoURL: payload.establishmentLogoURL,
+	establishmentCountry: payload.establishmentCountry,
+	establishmentCity: payload.establishmentCity,
+	establishmentStreet: payload.establishmentStreet,
+	establishmentPinCode: payload.establishmentPinCode,
+	latitude: payload.latitude,
+	longitude: payload.longitude
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Donor" doc:id="bbecada2-4665-456a-b4ea-00b50981c8f7" config-ref="Donor_Database_Config" autoGenerateKeys="true" target="vDonorPayloadResponse">
+			<db:sql ><![CDATA[INSERT INTO sys.donor
+(
+deviceToken,
+firstName,
+lastName,
+mobileNumber,
+emailAddress,
+establishmentName,
+establishmentRegistrationNumber,
+establishmentLogoURL,
+establishmentCountry,
+establishmentCity,
+establishmentStreet,
+establishmentPinCode,
+latitude,
+longitude)
+VALUES
+(
+:deviceToken ,
+:firstName ,
+:lastName ,
+:mobileNumber ,
+:emailAddress ,
+:establishmentName ,
+:establishmentRegistrationNumber ,
+:establishmentLogoURL ,
+:establishmentCountry ,
+:establishmentCity ,
+:establishmentStreet ,
+:establishmentPinCode,
+:latitude,
+:longitude )]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vDonorPayloadRequest]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names >
+				<db:auto-generated-keys-column-name value="donorID" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="DW Map : Donor ID" doc:id="e5f25250-04b1-46aa-9eda-d920efea11ed" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonorID" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonorPayloadResponse.generatedKeys.GENERATED_KEY]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="DW Map : Success Response" doc:id="c38202f8-9aa8-4c2b-971d-b7fcf7f6a743" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Donor Registered Successfully",
+	"data": {
+		"donorID": (vars.vDonorID default "") as String
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="f29847d4-7756-4312-b798-be709c7e0c85" message="END  post-donors-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ba9719e7-9617-4977-8054-ebd85f0a97ac" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred" doc:id="bb2b6a6b-61b8-4db7-b19c-84aa4ff31121" message="Error occurred in registering a new Donor in the system - #[error.description]"/>
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="7a9f9175-9c52-44b7-86b6-bf3c07b3bb47">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor registration failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

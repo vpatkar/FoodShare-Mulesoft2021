@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<flow name="post-donation-item-flow" doc:id="283a3883-f1a9-43fe-8e41-7d6c9db0e74c" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="731d9242-5318-4825-a92c-be9d4c6d4be4" message="START post-donation-item-flow"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="DW Map - Request Payload" doc:id="ad19d894-cf55-4ac5-8f68-b7d2b3f1a010">
+            <ee:variables>
+				<ee:set-variable variableName="vDonorID" ><![CDATA[attributes.uriParams.'donorID']]></ee:set-variable>
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+		<flow-ref doc:name="new-donation-item-sub-flow" doc:id="762ff5f1-7fb8-499f-ba52-9c038a696f59" name="new-donation-item-sub-flow"/>
+		<async doc:name="Async send notifications to nearby beneficiaries" doc:id="53007f17-471c-46ae-ab5c-4e6ea29dd52d" >
+			<flow-ref doc:name="fetch-beneficiaries-by-geoproximity-sub-flow" doc:id="86d75967-e911-4193-ad26-5992a55a6bc4" name="fetch-beneficiaries-by-geoproximity-sub-flow" />
+			<flow-ref doc:name="send-notification-beneficiaries-sub-flow" doc:id="ca25baf3-d060-477a-bc72-eceb09a11581" name="send-notification-beneficiaries-sub-flow"/>
+		</async>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="5d699366-dfef-4d32-a596-72a1a2dd0ca4" message="END post-donation-item-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="375f2744-6217-4afe-92c5-d94876a50620" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="1aaded23-2685-41c7-8752-c71e6e02cbc5"
+					message="Error occurred in submitting a new donation item in the system - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="49b54789-307d-4273-b4f0-cf9181ec8e1a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Item Submission Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="new-donation-item-sub-flow" doc:id="b7d30b9e-99c3-48d8-a2df-15690586f5a4" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="018cd91e-bf45-4684-a5c3-3f7013b42dad" message="START new-donation-item-sub-flow"/>
+		<http:request method="POST" doc:name="donations-sapi - New Donation Item" doc:id="1819b10f-4404-4307-90eb-3a8284d6b046" config-ref="HTTP_Request_Donations_SAPI_configuration" path="${donations-sapi.create-donation-item-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="20000" target="vDonationItemSAPIReponse">
+			<http:body><![CDATA[#[vars.vOriginalPayload]]]></http:body>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"donorID" : vars.vDonorID
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="DW Map - vDonationItemSAPIReponse to JSON" doc:id="6b18df7f-c52f-4501-9953-8df8f1927f23">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonationItemSAPIReponse]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO Success Payload" doc:id="2871fcc7-c879-4045-934f-74d352bce196" message="Response Payload - #[payload]"/>
+	</sub-flow>
+	<sub-flow name="fetch-beneficiaries-by-geoproximity-sub-flow" doc:id="75252e10-06bd-45f0-bff6-8cf1c4cc8fe8" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="b272b948-1fb1-4961-8bf6-326cba231945" message="START fetch-beneficiaries-by-geoproximity"/>
+		<http:request method="GET" doc:name="donor-sapi : Fetch Donor Coordinates" doc:id="b3882427-47b3-4a98-abce-216ee297b51f" config-ref="HTTP_Request_Donor_SAPI_configuration" path="${donor-sapi.get-donor-details-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" target="vDonorsSAPIResponse">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donorID" : vars.vDonorID
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="DW Map - vDonorCoordinates to JSON" doc:id="3f83d4b5-2d30-4094-b0ca-9651ded26a8a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonorCoordinates" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	donorLatitude: vars.vDonorsSAPIResponse.data.latitude,
+	donorLongitude: vars.vDonorsSAPIResponse.data.longitude
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO Donor Coordinates Fetched" doc:id="a57b04e2-48ab-47cb-bf6d-72bd068a0715" message="Donor Coordinates fetched successfully - #[vars.vDonorCoordinates]"/>
+		<http:request method="GET" doc:name="beneficary-sapi : Beneficiaries near donor" doc:id="071b4fa1-b985-4e62-90e0-add2a39cd538" config-ref="HTTP_Request_Beneficiary_SAPI_configuration" path="${beneficiary-sapi.get-nearby-beneficiaries-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" target="vGeoproximityBeneficiariesResponse">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"x-latitude" : vars.vDonorCoordinates.donorLatitude,
+	"x-longitude" : vars.vDonorCoordinates.donorLongitude,
+	"x-radius" : p('beneficiary-sapi.search-radius')
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="DW Map - vGeoproximityBeneficiariesResponse to JSON" doc:id="22c4f89a-ceef-4ad1-8e43-df5aa1ff65e7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vGeoproximityBeneficiariesResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vGeoproximityBeneficiariesResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO vGeoproximityBeneficiariesResponse" doc:id="ad1c7aea-7ceb-4e29-b923-4cb76e05f21b" message="vGeoproximityBeneficiariesResponse - #[vars.vGeoproximityBeneficiariesResponse]"/>
+	</sub-flow>
+	<sub-flow name="send-notification-beneficiaries-sub-flow" doc:id="d125e6e0-f5d5-4bb7-9094-8262e3446c86" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="99f57d10-3565-4230-9017-0e1163bac3dc" message="START send-notification-beneficiaries-sub-flow"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="40202895-2708-4fa5-a2f0-7f6c3ecfc297" message="END send-notification-beneficiaries-sub-flow"/>
+	</sub-flow>
+</mule>

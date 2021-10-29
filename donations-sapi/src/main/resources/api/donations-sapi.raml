@@ -1,0 +1,173 @@
+#%RAML 1.0
+title: donations-sapi
+version: 1
+description: System API that acts as a wrapperfor the donationItems for FoodShare
+ 
+
+/donors/{donorID}/donationItems:
+  uriParameters:
+    donorID:
+      required: true
+      example: D101
+      type: string        
+    
+  post:
+    description: API endpoint to submit a new donation item
+    displayName: API endpoint to submit a new donation item
+    body:
+      application/json:
+        example:
+          {
+                "itemTitle": "Mava Cake",
+                "itemShortDesc": "Awsome Mava Cake available for you",
+                "dateCreated": "24-01-2021T12:12:00Z",
+                "status": "Submitted",
+                "itemExpiryDate": "25-01-2021T12:12:00Z",
+                "audioFilePath": "https://abc.com/asdsd/asddfd",
+                "attachments": [
+                                    {
+                                        "fileName": "caramelCustard.jpg",
+                                        "mimeType": "image/jpeg",
+                                        "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+                                    }
+                                ]
+          } 
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {
+                  "status": "S",
+                  "message": "Donation Item Saved Successfully",
+                  "data": {
+                      "donationItemID": "DI101"
+                  }
+              }  
+
+  get:
+    description: API endpoint to fetch donationItems for a given Donor
+    displayName: API endpoint to fetch donationItems for a given Donor
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                    "status": "S",
+                    "message": "Donation Items fetched successfully",
+                    "data": [
+                        {
+                            "itemID": "DI101",
+                            "itemTitle": "Mava Cake",
+                            "itemShortDesc": "Awsome Mava Cake available for you",
+                            "dateCreated": "24-01-2021T12:12:00Z",
+                            "status": "Accepted",
+                            "itemExpiryDate": "25-01-2021T12:12:00Z",
+                            "benefeciaryName": "Darren Bent",
+                            "beneficiaryContactNumber": "9911212234",
+                            "audtionFilePath": "",
+                            "attachments": [
+                                              {
+                                                  "fileName": "caramelCustard.jpg",
+                                                  "mimeType": "image/jpeg",
+                                                  "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+                                              }
+                                          ]
+                        }
+                    ]
+                }
+/donationItems/{donationItemID}:
+  uriParameters:
+    donationItemID:
+      required: true
+      example: DI101
+      type: string
+  put:
+    description: API endpoint to update a donation Item
+    displayName: API endpoint to update a donation Item
+    body:
+      application/json:
+        example:
+          {    
+             "status" : "ACCEPTED", 
+             "beneficiaryID": "2"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                  "status": "S",
+                  "message": "Donation Item Updated Successful",
+                  "data": null
+              }
+
+/beneficiary/{beneficiaryID}/donationItems:
+  uriParameters:
+    beneficiaryID:
+      required: true
+      example: B101
+      type: string
+      
+  get:
+    description: API endpoint to fetch donation Items near a given beneficiary
+    displayName: API endpoint to fetch donation Items near a given beneficiary           
+    queryParameters:
+      radius:
+        type: string
+        required: false
+        default: "10"
+        example: "10"
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                      "status": "S",
+                      "message": "Donation Items fetched successfully",
+                      "data": [
+                          {
+                              "donorEstablishmentCity": "Tonbridge",
+                              "distance": 3270.4058471185594,
+                              "itemTitle": "Mava Cake",
+                              "donorEmailAddress": "graham.nikola@grahamsitalian.com",
+                              "dateCreated": "2021-10-21T11:53:03",
+                              "donorFirstName": "Paras",
+                              "donorEstablishmentStreet": "13 Redbud Road",
+                              "donorEstablishmentCountry": "UK",
+                              "donationItemID": 1,
+                              "itemShortDesc": "Awsome Mava Cake available for you",
+                              "donorEstablishmentName": "Graham's Italian",
+                              "itemExpiryDate": "2021-10-22T11:53:03",
+                              "donorID": 2,
+                              "audioFilePath": "https://abc.com/asdsd/asddfd",
+                              "donorMobileNumber": "3455612375",
+                              "donorLastName": "Kuruvilla",
+                              "status": "SUBMITTED",
+                              "beneficiaryID": null,
+                              "attachments": [
+                                  {
+                                      "fileName": "caramelCustard.jpg",
+                                      "donationItemID": 1,
+                                      "mimeType": "image/jpeg",
+                                      "donationItemAttachmentID": 2,
+                                      "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+                                  },
+                                  {
+                                      "fileName": "appluePIe.jpg",
+                                      "donationItemID": 1,
+                                      "mimeType": "image/jpeg",
+                                      "donationItemAttachmentID": 3,
+                                      "url": "https://abc.eu-west-2.amazonaws.com/pie.png"
+                                  }
+                              ]
+                          },
+                          
+                      ]
+                  }
+
+            
+

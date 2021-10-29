@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="post-donation-items-flow" doc:id="8cada6fa-4a93-41f6-b291-89e7f91cf8c8" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="a9857a03-c20f-45e8-a1df-65a5034430cc" message="START post-donation-items-flow"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="DW Map - Request Payload" doc:id="8c6c45c1-6114-49cd-8c07-dc48dbf0686b">
+            <ee:variables>
+				<ee:set-variable variableName="vDonorID" ><![CDATA[attributes.uriParams.'donorID']]></ee:set-variable>
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+		<http:request method="POST" doc:name="donations-papi : Create New Donation Item" doc:id="0e5e51e6-51b6-44b4-aa5e-4e292abcda0a" path="${donations-papi.create-donation-item-path}" config-ref="HTTP_Request_Donations_PAPI_configuration" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}">
+			<reconnect frequency="3000" count="3" />
+			<http:body ><![CDATA[#[vars.vOriginalPayload]]]></http:body>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donorID" : vars.vDonorID
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO - Response" doc:id="9e8da836-05a4-4e7f-814c-fb451ad8fe9e" message="API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="2d189374-1549-43e2-9e80-96e7f18fe4c4" message="END post-donation-items-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b603a427-6ac1-437b-b999-fb9475bad823" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="dadfcd94-1353-4277-b241-445c308728df"
+					message="Error occurred in submitting a new donation item in the system - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="144b8abc-1691-481e-9560-cbdb89614682">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Item Submission Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="post-attachments-flow" doc:id="7c5c69d1-6f07-4d02-836e-d04aea92b1b0" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="82914501-cd33-4442-8c34-cb088f6b4641" message="START post-attachments-flow"/>
+		<http:request method="POST" doc:name="attachments-sapi : Upload new attachment" doc:id="e13d61b9-3ace-4d4b-8245-772470ea395d" config-ref="HTTP_Request_Attachments_SAPI_configuration" path="${attachments-sapi.create-attachment-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"fileName" : attributes.headers.'fileName'
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="89f1ec2d-329e-4efc-990b-d92de7e53ed3" message="Attachments System API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="886a6841-a186-437e-a7dd-a5c2e84155fd" message="END post-attachments-flow"/>
+	</flow>
+</mule>

@@ -1,0 +1,23 @@
+#%RAML 1.0 Library
+
+
+traits:
+  commonErrorCodes: !include commonErrorCodes.raml
+            
+types: 
+  CommonError:
+    type: object
+    properties:
+      apiName: string
+      version: integer
+      correlationId: string
+      timestamp: datetime
+      meta:
+        type: object
+        properties:
+          status: string
+          message: string[]
+      data:
+        type: any
+        required: false
+    

@@ -1,0 +1,107 @@
+#%RAML 1.0
+title: donor-sapi
+version: 1
+
+uses: 
+  common-error-library : exchange_modules/4f5614e6-449c-4800-8081-0011457a38ca/common-error-codes/1.0.1/common-error-codes.raml
+  
+  
+  
+/donors:
+  post:
+    description: API endpoint to create a new Donor in the system
+    displayName: API endpoint to create a new Donor in the system
+    is: [common-error-library.commonErrorCodes ]
+    body:
+      application/json:
+        example: |
+              {
+                "donorDeviceToken": "AC23=59013",
+                "firstName": "Graham",
+                "lastName": "Nikola",
+                "mobileNumber": "3455612375",
+                "emailAddress": "graham.nikola@grahamsitalian.com",
+                "establishmentName": "Graham's Italian",
+                "establishmentRegistrationNumber": "R12334",
+                "establishmentLogoURL": "https://dfdfd.com/logo.png",
+                "establishmentCountry": "UK",
+                "establishmentCity": "Tonbridge",
+                "establishmentStreet": "13 Redbud Road",
+                "establishmentPinCode": "TN9 1FX",
+                "latitude": "30.4",
+                "longitude": "20.1"
+              }
+       
+    responses:
+      201:
+        description: Donor Created Successfully
+        body:
+          application/json:
+            example: |
+              {
+                "status": "S",
+                "message": "Donor Registered Successfully",
+                "data": {
+                    "donorID": "D102"
+                }
+              }
+            
+              
+
+/donors/{donorID}: 
+  uriParameters:
+    donorID:
+      description: Donor Unique ID
+  get:
+    is: [ common-error-library.commonErrorCodes ]
+    description: Fetch Donor details for a donor ID
+    displayName: Fetch Donor details for a donor ID
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "donorID": "D102",
+                "donorDeviceToken": "AC23=59013",
+                "firstName": "Graham",
+                "lastName": "Nikola",
+                "mobileNumber": "3455612375",
+                "emailAddress": "graham.nikola@grahamsitalian.com",
+                "establishmentName": "Graham's Italian",
+                "establishmentRegistrationNumber": "R12334",
+                "establishmentLogoURL": "https://dfdfd.com/logo.png",
+                "establishmentCountry": "UK",
+                "establishmentCity": "Tonbridge",
+                "establishmentStreet": "13 Redbud Road",
+                "establishmentPinCode": "TN9 1FX",
+                "latitude": "30.4",
+                "longitude": "20.1"
+              }
+
+/donors/{donorID}/device-token:
+  uriParameters:
+    donorID:
+      description: Donor Unique ID
+  put:
+    description: API endpoint wto update device token of a Donor
+    displayName: This API endpoint will be called to update the mobile device token for a Donor
+    body:
+      application/json:
+        example: |
+          { 
+            "token" : "ads90=343"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "status" : "S",
+                "message": "Token Updated successfully",
+                "data" : null
+              }
+        
+              
+                  

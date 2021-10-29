@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<flow name="get-beneficiary-flow"
+		doc:id="bafd8ddf-b719-4551-ac83-f076f585bc59">
+		<logger level="INFO" doc:name="LOG INFO Start"
+			doc:id="98095cf8-bb6b-47ef-882b-27aec5dcf33c"
+			message="START  get-beneficiary-flow" />
+		<ee:transform doc:name="DW Map : Database Request"
+			doc:id="59794d24-efbb-4c95-ad17-6cf25f4d5f58">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="vDBRequest"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	beneficiaryID: attributes.uriParams.'beneficiaryID' default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Beneficiary"
+			doc:id="ad5e76a1-7378-4512-abf4-e074632b82cf"
+			config-ref="Beneficiary_Database_Config" target="vDBResponse">
+			<db:sql><![CDATA[SELECT beneficiaryID,
+    deviceToken,
+    firstName,
+    lastName,
+    mobileNumber,
+    emailAddress,
+    establishmentName,
+    establishmentRegistrationNumber,
+    establishmentLogoURL,
+    establishmentCountry,
+    establishmentCity,
+    establishmentStreet,
+    establishmentPinCode,
+    latitude,
+    longitude
+FROM sys.beneficiary where beneficiaryID = :beneficiaryID
+]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.vDBRequest]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Beneficiary Details Fetched?" doc:id="4aba812c-0a8a-44c8-be94-b3d09f3adf99" >
+			<when expression="#[vars.vDBResponse[0] != null]">
+				<ee:transform doc:name="DW Map : Success Response" doc:id="b87ee078-e170-4cd5-b07d-6f1f67a7edc3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var beneficiaryDetails = vars.vDBResponse[0]
+---
+{
+	"status": "S",
+	"message": "Beneficiary details fetched successfully",
+	"data": {
+		"beneficiaryID": beneficiaryDetails.beneficiaryID as String,
+		"beneficiaryDeviceToken": beneficiaryDetails.deviceToken,
+		"firstName": beneficiaryDetails.firstName,
+		"lastName": beneficiaryDetails.lastName,
+		"mobileNumber": beneficiaryDetails.mobileNumber,
+		"emailAddress": beneficiaryDetails.emailAddress,
+		"establishmentName": beneficiaryDetails.establishmentName,
+		"establishmentRegistrationNumber": beneficiaryDetails.establishmentRegistrationNumber,
+		"establishmentLogoURL": beneficiaryDetails.establishmentLogoURL,
+		"establishmentCountry": beneficiaryDetails.establishmentCountry,
+		"establishmentCity": beneficiaryDetails.establishmentCity,
+		"establishmentStreet": beneficiaryDetails.establishmentStreet,
+		"establishmentPinCode": beneficiaryDetails.establishmentPinCode,
+		"latitude": beneficiaryDetails.latitude,
+		"longitude": beneficiaryDetails.longitude
+	}
+}
+
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="DW Map : Database Response - No Records" doc:id="8422af32-4cf2-4538-a248-128178d6a430">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary details not found",
+	"data": vars.vDBResponse[0] default null
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG INFO End"
+			doc:id="f421c15b-68ce-45d9-baf2-b0f3925ec5ce"
+			message="END  get-beneficiary-flow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true"
+				logException="true" doc:name="On Error Propagate"
+				doc:id="f945b727-d080-479d-bd0f-d6d5fd438450" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="c1b217f0-e90f-401b-bcd0-f0179766bb6e"
+					message="Error occurred in fetching Beneficiary details - #[error.description]" />
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="e6f9a4f9-4863-4b86-95af-e66614d03f6a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary details not fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			
+</on-error-propagate>
+		</error-handler>
+	</flow>
+
+</mule>

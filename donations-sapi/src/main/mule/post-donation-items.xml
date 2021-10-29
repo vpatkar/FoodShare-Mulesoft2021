@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="post-donation-items-flow" doc:id="a75eae60-2d7f-4265-b739-37aa7bf214e7" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="bd9b4974-544f-4309-99c7-f521c164b421" message="START post-donation-items-flow"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="DW Map - Request Payload">
+            <ee:variables>
+				<ee:set-variable variableName="vDonorID" ><![CDATA[attributes.uriParams.'donorID']]></ee:set-variable>
+				<ee:set-variable variableName="vDonationItemRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	donorID: attributes.uriParams.'donorID',
+	itemTitle: payload.itemTitle,
+	itemShortDesc: payload.itemShortDesc,
+	status: "SUBMITTED",
+	
+	audioFilePath: payload.audioFilePath
+}]]></ee:set-variable>
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+		<try doc:name="Try" doc:id="cb3b1dcc-2d3d-416c-8355-de3dea9cb3bc" transactionalAction="ALWAYS_BEGIN">
+			<db:insert doc:name="Donation Item" doc:id="7d7dc89d-d4da-4a1e-8ec6-48cdc7e3d081" config-ref="DonationItem_Database_Config" transactionalAction="ALWAYS_JOIN" autoGenerateKeys="true" target="vDonationItemResponse">
+			<db:sql><![CDATA[INSERT INTO donation_item
+(
+donorID,
+itemTitle,
+itemShortDesc,
+status,
+
+
+audioFilePath)
+VALUES
+(
+:donorID,
+:itemTitle ,
+:itemShortDesc ,
+:status,
+
+ 
+:audioFilePath )
+]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.vDonationItemRequest]]]></db:input-parameters>
+				<db:auto-generated-keys-column-names >
+					<db:auto-generated-keys-column-name value="donationItemID" />
+				</db:auto-generated-keys-column-names>
+		</db:insert>
+			<ee:transform doc:name="DW Map - vDonationItemResponse" doc:id="2b00f366-a913-4c94-b7a9-61bdad10ea6c" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="vDonationItemID" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonationItemResponse.generatedKeys.GENERATED_KEY]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="process-attachments-sub-flow" doc:id="c452511c-62f5-43df-8412-8a5bfa05ea5e" name="process-attachments-sub-flow"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d3d097be-da8c-4b25-b7ee-919dcb2b2873" >
+					<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="2576dcfc-6344-4ff0-b2bb-a2a59e062e77"
+					message="Error occurred in submitting a new donation item in the system - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="710af177-b424-42ec-8e6d-a51cabcd7ce5">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Item Submission Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				</on-error-propagate>
+				
+			</error-handler>
+		</try>
+		<ee:transform doc:name="DW Map - Success Response" doc:id="2f360fa9-f28f-4a1d-9989-11fd9c9634d4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Donation Item submitted Successfully",
+	"data": {
+		"donationItemID": (vars.vDonationItemID default "") as String
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="8696a057-b1eb-4b92-806e-d0611ac25e57" message="post-donation-items-flow END"/>
+	</flow>
+	<sub-flow name="process-attachments-sub-flow" doc:id="f08424d6-eff8-440f-8cb9-af0eb9e38ad2" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="ced781e0-d939-4732-8904-de653aa8bb74" message="process-attachments-subFLow START"/>
+		<choice doc:name="Attachments present?" doc:id="c56d5b9c-866d-48fc-a224-1f696bdc4854" >
+			<when expression="#[vars.vOriginalPayload.attachments[0] != null]">
+				<logger level="INFO" doc:name="LOG INFO Attachments present" doc:id="83efec8d-c88f-44f3-82e6-289d0e585db6" message="Processing attachments"/>
+				<ee:transform doc:name="DW Map - Attachments payload" doc:id="ad106fa1-411b-483f-90fb-2c359276c6ed">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="vAttachmentsDBRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vOriginalPayload.attachments map(attachment, attachmentIndex) -> {
+	donationItemID: (vars.vDonationItemID default "") as String,
+	fileName: attachment.fileName,
+	mimeType: attachment.mimeType,
+	url: attachment.url
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<db:bulk-insert doc:name="Donation Item Attachments" doc:id="f58f3104-0125-4791-9b6d-6872352f40d6" config-ref="DonationItem_Database_Config" transactionalAction="ALWAYS_JOIN" target="vAttachmentsDBResponse">
+					<db:bulk-input-parameters ><![CDATA[#[vars.vAttachmentsDBRequest]]]></db:bulk-input-parameters>
+					<db:sql ><![CDATA[insert into donation_item_attachments
+(donationItemID,fileName,mimeType,url)
+values
+(:donationItemID,:fileName,:mimeType,:url)]]></db:sql>
+				</db:bulk-insert>
+				<ee:transform doc:name="DW Map - vAttachmentsDBResponse to JSON" doc:id="ae2ca71d-c781-4900-80b9-bdfe3c7dcd21" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vAttachmentsDBResponse]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO Attachments not present" doc:id="accddf6a-734b-4fb7-8f72-5985d7581edb" message="Attachments not present"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="a0aa0445-73f1-43f7-8e65-70fe4173e3e9" message="process-attachments-subFLow END"/>
+	</sub-flow>
+</mule>

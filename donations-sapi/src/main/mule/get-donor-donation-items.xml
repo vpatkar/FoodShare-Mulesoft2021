@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get-donor-donation-items-flow" doc:id="bc390a19-0470-44e0-9345-ec0336121dfe" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="54520448-a959-4302-b01f-5077ac6921c0" message="START get-donor-donation-items-flow"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="DW Map - Request Payload" doc:id="e83cb842-6a97-4119-83a8-3d63516d79d9">
+            <ee:variables>
+				<ee:set-variable variableName="vDonorID" ><![CDATA[attributes.uriParams.'donorID']]></ee:set-variable>
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+		<db:select doc:name="donationItems" doc:id="14d582e4-7886-425d-abd9-e4e5e91b4776" config-ref="DonationItem_Database_Config" target="vDonationItemsResponse">
+			<db:sql ><![CDATA[SELECT donationItemID,itemTitle,itemShortDesc,dateCreated,status,itemExpiryDate,audioFilePath,donorID,b.firstName as beneficiaryFirstName,b.beneficiaryID, b.lastName as beneficiaryLastName, b.emailAddress as beneficiaryEmailAddress,b.establishmentName as beneficiaryEstalishmentName,b.establishmentStreet as beneficiaryEstalishmentStreet,b.establishmentCity as beneficiaryEstablishmentCity,b.establishmentCountry as beneficiaryEstablishmentCountry,b.establishmentPinCode as beneficiaryEstablishmentPinCode FROM sys.donation_item di left join beneficiary b on di.beneficiaryID  = b.beneficiaryID where donorID=:donorID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"donorID": vars.vDonorID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="DW Map - vDonationItemsResponse to JSON" doc:id="d0c46b6b-b998-41c9-bca2-4359d66322ce" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonationItemsResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonationItemsResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="fetch-attachments-common-flow" doc:id="12921932-7520-4b79-b885-a5c133bce15f" name="fetch-attachments-common-flow"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="88e18d58-6c48-4a01-9c20-93c8424b3984" message="get-donor-donation-items-flow END"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8ddecf1a-c1e7-4bd3-9ffe-150a649fa29d" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="d597f455-f44e-4784-be4c-0a73b32e1ab6"
+					message="Error occurred in fetching donationItems - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="120dabe4-2be6-428b-b977-a13f0079c1c5">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Items could not be fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

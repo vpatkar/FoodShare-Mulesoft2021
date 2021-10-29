@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-beneficiary-flow" doc:id="a4322882-8b7d-4943-8492-9687bce4ebdb" >
+		<logger level="INFO" doc:name="LOG INFO Start"
+			doc:id="8eb645a0-21ec-4b13-b83f-6e897c57e13e"
+			message="START  get-beneficiary-flow" />
+		<http:request method="GET" doc:name="beneficiary-sapi : GET Beneficary Details" doc:id="72e5bb21-9675-4084-bc17-ae7851de00b4" config-ref="HTTP_Request_Beneficiary_SAPI_configuration" path="${beneficiary-sapi.get-beneficiary-details-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"beneficiaryID" : attributes.uriParams.'beneficiaryID'
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="291cd621-5665-4d39-9b35-2350519e004b" message="Beneficiary GET API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End"
+			doc:id="3dc9812a-0675-4907-ada8-88255a507de7"
+			message="END  get-beneficiary-flow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true"
+				logException="true" doc:name="On Error Propagate"
+				doc:id="e29258c0-f6ac-44e0-93fb-df4272512dad" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="5f56356c-cb8c-429f-b4d4-9c7f45c7bdfa"
+					message="Error occurred in fetching Beneficiary details - #[error.description]" />
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="04db8b3b-d4a7-4db6-9483-6a904ec3b578">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary details not fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			
+</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

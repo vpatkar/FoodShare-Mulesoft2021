@@ -1,0 +1,73 @@
+#%RAML 1.0
+title: donations-sapi
+version: 1
+description: System API that acts as a wrapperfor the donationItems for FoodShare
+ 
+
+/donors/{donorID}/donationItems:
+  uriParameters:
+    donorID:
+      required: true
+      example: D101
+      type: string        
+    
+  post:
+    description: API endpoint to submit a new donation item
+    displayName: API endpoint to submit a new donation item
+    body:
+      application/json:
+        example:
+          {
+                "itemTitle": "Mava Cake",
+                "itemShortDesc": "Awsome Mava Cake available for you",
+                "dateCreated": "24-01-2021T12:12:00Z",
+                "status": "Submitted",
+                "itemExpiryDate": "25-01-2021T12:12:00Z",
+                "audioFilePath": "https://abc.com/asdsd/asddfd",
+                "attachments": [
+                                    {
+                                        "fileName": "caramelCustard.jpg",
+                                        "mimeType": "image/jpeg",
+                                        "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+                                    }
+                                ]
+          } 
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {
+                  "status": "S",
+                  "message": "Donation Item Saved Successfully",
+                  "data": {
+                      "donationItemID": "DI101"
+                  }
+              }  
+
+/device-token:  
+  put:
+    description: This API endpoint will be called to update the mobile device token for either beneficiary or donor
+    displayName: This API endpoint will be called to update the mobile device token for either beneficiary or donor
+    body:
+      application/json:
+        example: |
+          {
+            "id" : "D101",
+            "type" : "Donor",
+            "token" : "ads90=343"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "status" : "S",
+                "message": "Token Updated Successfully",
+                "data" : null
+              }
+  
+
+            
+

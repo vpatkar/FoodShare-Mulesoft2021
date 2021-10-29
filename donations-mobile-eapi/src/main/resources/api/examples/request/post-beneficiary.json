@@ -1,0 +1,17 @@
+{
+  "beneficiaryDeviceToken": "AC23=45657013",
+  "firstName": "Steve",
+  "lastName": "Jackson",
+  "mobileNumber": "9900112233",
+  "emailAddress": "steve.jackson@SteveCare.com",
+  "establishmentName": "Steve Care",
+  "establishmentRegistrationNumber": "NGO-1234",
+  "establishmentLogoURL": "https://dfdfd.com/logo.png",
+  "establishmentState": "Kent",
+  "establishmentCountry": "UK",
+  "establishmentCity": "Tonbridge",
+  "establishmentStreet": "13 Redbud Road",
+  "establishmentPinCode": "TN9 1FX",
+  "latitude": "31.4",
+  "longitude": "22.1"
+}

@@ -1,0 +1,7 @@
+{
+  "status": "S",
+  "message": "Beneficiary Registered Successfully",
+  "data": {
+    "beneficiaryID": "B102"
+  }
+}

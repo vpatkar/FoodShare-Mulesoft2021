@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="post-beneficiary-flow"
+		doc:id="cb8e3e26-d407-402f-9ac6-3d9d852026ee">
+		<logger level="INFO" doc:name="LOG INFO Start"
+			doc:id="cbbc00ca-38fb-4026-b048-dd21f7d468e4"
+			message="START  post-beneficiary-flow" />
+		<ee:transform
+			doc:name="DW Map : Beneficiary JSON to Database"
+			doc:id="426b7ec0-e1c4-4fb9-8ea2-a487f540fb04">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable
+					variableName="vBeneficiaryPayloadRequest"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	deviceToken: payload.beneficiaryDeviceToken,
+	firstName: payload.firstName,
+	lastName: payload.lastName,
+	mobileNumber: payload.mobileNumber,
+	emailAddress: payload.emailAddress,
+	establishmentName: payload.establishmentName,
+	establishmentRegistrationNumber: payload.establishmentRegistrationNumber,
+	establishmentLogoURL: payload.establishmentLogoURL,
+	establishmentCountry: payload.establishmentCountry,
+	establishmentCity: payload.establishmentCity,
+	establishmentStreet: payload.establishmentStreet,
+	establishmentPinCode: payload.establishmentPinCode,
+	latitude: payload.latitude,
+	longitude: payload.longitude
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Beneficiary"
+			doc:id="07fd8c5e-6383-42b6-802e-6646139f9a75"
+			config-ref="Beneficiary_Database_Config" autoGenerateKeys="true"
+			target="vBeneficiaryPayloadResponse">
+			<db:sql><![CDATA[INSERT INTO sys.beneficiary
+(
+deviceToken,
+firstName,
+lastName,
+mobileNumber,
+emailAddress,
+establishmentName,
+establishmentRegistrationNumber,
+establishmentLogoURL,
+establishmentCountry,
+establishmentCity,
+establishmentStreet,
+establishmentPinCode,
+latitude,
+longitude)
+VALUES
+(
+:deviceToken ,
+:firstName ,
+:lastName ,
+:mobileNumber ,
+:emailAddress ,
+:establishmentName ,
+:establishmentRegistrationNumber ,
+:establishmentLogoURL ,
+:establishmentCountry ,
+:establishmentCity ,
+:establishmentStreet ,
+:establishmentPinCode,
+:latitude,
+:longitude )]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.vBeneficiaryPayloadRequest]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names>
+				<db:auto-generated-keys-column-name
+					value="beneficiaryID" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="DW Map : Beneficiary ID"
+			doc:id="33d70553-40bf-4ca0-8feb-9356ea20e126">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="vBeneficiaryID"><![CDATA[%dw 2.0
+output application/json
+---
+vars.vBeneficiaryPayloadResponse.generatedKeys.GENERATED_KEY]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="DW Map : Success Response"
+			doc:id="40fdaee4-1062-47fa-bba7-f0a208b3d1d4">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Beneficiary Registered Successfully",
+	"data": {
+		"beneficiaryID": (vars.vBeneficiaryID default "") as String
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End"
+			doc:id="e3a90d24-ca8c-43b6-b802-054171e3e334"
+			message="END  post-beneficiary-flow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true"
+				logException="true" doc:name="On Error Propagate"
+				doc:id="f6c3a467-3856-4f9d-b69d-cb1a7f8eb95e" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="4f1e342d-9d65-41d0-8735-2ca432b32d2b"
+					message="Error occurred in registering a new Beneficiary in the system - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="7ebe2dfc-9511-472b-8be1-0bc095496829">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary Registration Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

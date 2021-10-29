@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="put-donation-item-flow" doc:id="c1c3f352-638a-4fb6-a132-cad83836ab4a" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="3cc28f12-7bd3-444c-a1c0-692f3989406b" message="START put-donation-item-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="31d7ab4e-0c03-489b-9819-e19653507bc3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="vDonationItemID" ><![CDATA[attributes.uriParams.'donationItemID']]></ee:set-variable>
+				<ee:set-variable variableName="vBeneficiaryID" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.beneficiaryID]]></ee:set-variable>
+				<ee:set-variable variableName="vbeneficiaryIDPresent" ><![CDATA[%dw 2.0
+output application/json
+---
+if ( payload.beneficiaryID != null and payload.beneficiaryID != "" ) true
+else 
+false]]></ee:set-variable>
+				<ee:set-variable variableName="vStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.status]]></ee:set-variable>
+				<ee:set-variable variableName="vStatusPresent" ><![CDATA[%dw 2.0
+output application/json
+---
+if ( payload.status != null and payload.status != "" ) true
+else 
+false]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:update doc:name="Donation Item" doc:id="bf373f28-743d-4b2a-b2ed-81c63c0abf73" config-ref="DonationItem_Database_Config" target="vDBUpadteResponse">
+			<db:sql ><![CDATA[update donation_item
+set
+status = if(:statusPresent, :newStatus, status),
+beneficiaryID = if(:beneficiaryIDPresent, :newBeneficiary , beneficiaryID)
+where   donationItemID= :donationItemID;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	statusPresent: vars.vStatusPresent,
+	newStatus: vars.vStatus,
+	beneficiaryIDPresent: vars.vbeneficiaryIDPresent,
+	newBeneficiary: vars.vBeneficiaryID,	
+	donationItemID: vars.vDonationItemID
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="DW Map- vDBUpadteResponse to JSON" doc:id="8ef6f312-4027-48b4-9864-6a87901d9b62" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDBUpadteResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDBUpadteResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="DW Map - Success Response" doc:id="e0041b27-e68a-4a63-b364-0d7b84466d4e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Donation Item Updated Successfully",
+	"data": null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="913e786e-0148-4807-9f14-ad5c7dd873ac" message="END put-donation-item-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3f7e7801-3e45-4c46-bd3e-a3d96ea3cb17" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred in processing" doc:id="cf41533b-036e-4248-85cf-7cc82fbd999f" message="Error in updating donation item. Error is - #[error.description]"/>
+				<ee:transform doc:name="DW Map - Error Response" doc:id="278dedb1-7730-4dfa-8f97-0b99d3822aed" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Item could not be updated",
+	"errorMessage": error.description
+}
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

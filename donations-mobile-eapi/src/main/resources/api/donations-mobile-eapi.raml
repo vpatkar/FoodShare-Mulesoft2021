@@ -1,0 +1,162 @@
+#%RAML 1.0
+title: donations-mobile-eapi
+version: v1
+
+/donors/{donorID}/donationItems:
+  uriParameters:
+    donorID:
+      required: true
+      example: D101
+      description: The registered Donor ID in FoodShare system
+      displayName: The registered Donor ID in FoodShare system
+      type: string
+        
+  post:
+    description: API endpoint called by the donor from their mobile device to submit details for a new food donation item
+    displayName: Donor API endpoint to submit a new food donation 
+    body:
+      application/json:
+        example: !include examples/request/post-donation-items.json
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include examples/response/post-donation-items.json
+  get:
+    description: API endpoint called by the donor from their mobile device to fetch their submitted donation items
+    displayName: API endpoint to fetch donation items for a donor
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/get-donor-donation-items.json
+ 
+/donors:
+  
+  post:
+    description: API endpoint to register a new Donor in the FoodShare platform
+    displayName: API endpoint to register a new Donor in the FoodShare platform  
+    body:
+      application/json:
+        example: !include examples/request/post-donors.json
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include examples/response/post-donors-201.json
+
+/beneficiary/{beneficiaryID}/donationItems:
+  uriParameters:
+    beneficiaryID:
+      required: true
+      description: Beneficiary ID
+      displayName: Beneficiary ID
+      type: string
+  get:
+    description: API endpoint called by the beneficiary from their mobile device to fetch the donation items geographically near to their location
+    displayName: API endpoint to fetch the donation items geographically near to the beneficiary
+    queryParameters:
+      radius:
+        required: false
+        description: The radius in Kilometers to search for open donation listings
+        displayName: The radius in Kilometers to search for open donation listings
+        example: "10"
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/get-beneficiary-donation-items-200.json
+              
+ 
+/beneficiary:
+  post:
+    description: API endpoint to register a new beneficiary on the FoodShare platform
+    displayName: API endpoint to register a new Beneficiary on the FoodShare platform  
+    body:
+      application/json:
+        example: !include examples/request/post-beneficiary.json
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include examples/response/post-beneficiary-201.json
+
+/donationItems/{donationItemID}:
+  uriParameters:
+    donationItemID:
+      description: Donation Item ID of the donation to be updated
+      displayName: Donation Item ID of the donation to be updated
+      example: DI101
+      required: true
+  put:
+    description: API endpoint to update status of a donation Item or the beneficiary details for a donation item
+    displayName: API endpoint to update status of a donation Item or the beneficiary details for a donation item
+    body:
+      application/json:
+        example: !include examples/request/put-donation-item.json
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/put-donation-item.json
+
+/device-token:  
+  put:
+    description: This API endpoint will be called to update the mobile device token for either beneficiary or donor
+    displayName: This API endpoint will be called to update the mobile device token for either beneficiary or donor
+    body:
+      application/json:
+        example: !include examples/request/put-device-token.json
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/put-device-token-200.json
+
+/donors/{donorID}: 
+  uriParameters:
+    donorID:
+      description: Donor Unique ID
+  get:
+    
+    description: API endpoint to fetch Donor details for a donor ID
+    displayName: Fetch Donor details for a donor ID
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/get-donor-details-200.json
+
+/beneficiary/{beneficiaryID}: 
+  uriParameters:
+    beneficiaryID:
+      description: Beneficiary Unique ID
+  get:
+    
+    description: Fetch Beneficiary details for a Beneficiary ID
+    displayName: Fetch Beneficiary details for a Beneficiary ID
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include examples/response/get-beneficiary-details-200.json                 
+                    
+/attachments:
+  post:
+    headers:
+      fileName:
+        description: File Name of the attachment
+        displayName: File Name of the attachment
+        required: true
+        example: "caramelCustard.jpeg"
+        type: string
+    description: API endpoint to upload a new attachment
+    displayName: API endpoint to upload a new attachment
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include examples/response/post-attachments-201.json
+                                                                                   
+  

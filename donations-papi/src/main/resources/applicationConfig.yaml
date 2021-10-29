@@ -1,0 +1,26 @@
+http:
+  port: "8081"
+api:
+  id: ""
+donations-sapi:  
+  host: "donations-sapi.us-e2.cloudhub.io"
+  port: "80"
+  create-donation-item-path: "/api/donors/{donorID}/donationItems"
+  get-donor-donations-path: "/api/donors/{donorID}/donationItems"
+  
+donor-sapi:
+  host: "donors-sapi.us-e2.cloudhub.io"
+  port: "80"
+  get-donor-details-path: "/api/donors/{donorID}"
+  put-device-token-path: "/api/donors/{donorID}/device-token"  
+  
+beneficiary-sapi:
+  host: "beneficiary-sapi.us-e2.cloudhub.io"
+  port: "80"
+  get-nearby-beneficiaries-path: "/api/beneficiary"
+  put-device-token-path: "/api/beneficiary/{beneficiaryID}/device-token"
+  search-radius: "4000"
+
+    
+  
+  

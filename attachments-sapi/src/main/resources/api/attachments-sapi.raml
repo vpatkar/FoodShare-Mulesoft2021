@@ -1,0 +1,29 @@
+#%RAML 1.0
+title: attachments-sapi
+description: API to handle all attachments related operations for FoodShare system
+version: v1
+
+/{version}/attachment:
+  post:
+    headers:
+      fileName:
+        description: File Name of the attachment
+        displayName: File Name of the attachment
+        required: true
+        example: "caramelCustard.jpeg"
+        type: string
+    description: API endpoint to upload a new attachment
+    displayName: API endpoint to upload a new attachment
+    responses:
+      201:
+        body:
+          application/json:
+            example: |
+              {
+                "status": "S",
+                "message": "Attachment Uploaded Successfully",
+                "data": {
+                    "publicURL": "https://aws.sd.com/tea.jpeg"
+                }
+              }
+              

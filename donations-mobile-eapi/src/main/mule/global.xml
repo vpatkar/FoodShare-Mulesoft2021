@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<http:listener-config
+		name="donations-mobile-eapi-httpListenerConfig">
+		<http:listener-connection host="0.0.0.0"
+			port="${http.port}" />
+	</http:listener-config>
+	<apikit:config name="donations-mobile-eapi-config"
+		api="donations-mobile-eapi.raml" outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+	<http:request-config
+		name="HTTP_Request_Donations_SAPI_configuration"
+		doc:name="HTTP_Request_Donations_SAPI_configuration"
+		doc:id="f333b0de-866d-4142-a0b8-1d088a399942">
+		<http:request-connection
+			host="${donations-sapi.host}" port="${donations-sapi.port}" >
+			<reconnection >
+				<reconnect frequency="${http.request.reconnection-frequency}" count="${http.request.reconnection-count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	
+	<http:request-config
+		name="HTTP_Request_Donations_PAPI_configuration"
+		doc:name="HTTP_Request_Donations_PAPI_configuration"
+		doc:id="4ad06209-bd5e-4a68-9b7e-a978d3c02377">
+		<http:request-connection
+			host="${donations-papi.host}" port="${donations-papi.port}" >
+			<reconnection >
+				<reconnect frequency="${http.request.reconnection-frequency}" count="${http.request.reconnection-count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	
+	<http:request-config
+		name="HTTP_Request_Donor_SAPI_configuration"
+		doc:name="HTTP_Request_Donor_SAPI_configuration"
+		doc:id="459c24e9-084a-4e6a-8ef5-29a390ac283b">
+		<http:request-connection
+			host="${donor-sapi.host}" port="${donor-sapi.port}" >
+			<reconnection >
+				<reconnect frequency="${http.request.reconnection-frequency}" count="${http.request.reconnection-count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config
+		name="HTTP_Request_Beneficiary_SAPI_configuration"
+		doc:name="HTTP_Request_Beneficiary_SAPI_configuration"
+		doc:id="5d4971c4-6dbb-4403-9efb-c36160e2aa58">
+		<http:request-connection
+			host="${beneficiary-sapi.host}" port="${beneficiary-sapi.port}" >
+			<reconnection >
+				<reconnect frequency="${http.request.reconnection-frequency}" count="${http.request.reconnection-count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config
+		name="HTTP_Request_Attachments_SAPI_configuration"
+		doc:name="HTTP_Request_Attachments_SAPI_configuration"
+		doc:id="be8b4861-4c9e-40a6-815b-2c06643ae753">
+		<http:request-connection
+			host="${attachments-sapi.host}" port="${attachments-sapi.port}" >
+			<reconnection >
+				<reconnect frequency="${http.request.reconnection-frequency}" count="${http.request.reconnection-count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="387c39f5-b92d-4e53-98bf-69081beb5928"
+		file="applicationConfig.yaml" />		
+
+</mule>

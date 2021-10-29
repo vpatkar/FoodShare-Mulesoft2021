@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="put-device-token-flow" doc:id="b9f7f073-5d1e-4391-9081-7a1773a5c35a" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="13fc244c-17a5-497a-aeb8-e30e3b0f6bae" message="START put-device-token-flow"/>
+		<ee:transform doc:name="DW Map - Request" doc:id="bd46b013-53c6-4272-a4c8-7935fbd56a13" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="vBeneficiaryID" ><![CDATA[attributes.uriParams.'beneficiaryID']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:update doc:name="beneficary - Device Token" doc:id="0cc6b895-62b9-450f-86b2-9cce3436c83b" config-ref="Beneficiary_Database_Config" target="vDBResponse">
+			<db:sql ><![CDATA[update beneficiary
+set deviceToken = :deviceToken
+where beneficiaryID = :beneficiaryID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	deviceToken: vars.vOriginalPayload.token,
+	beneficiaryID: vars.vBeneficiaryID
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="DW Map - vDBResponse to JSON" doc:id="5eff3432-acdd-4395-97d6-8de86e69b348" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDBResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDBResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="DW Map - Success Response" doc:id="c1ac0f7b-9463-4995-b766-922280fa8522" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Device Token Updated Successfully",
+	"data": null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="69f0956d-e89c-4831-b554-37833adc9264" message="END put-device-token-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fdeef5fb-b2a1-473d-b5a3-d149361d0f4b" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="7642a0ee-7aac-46cf-a44f-d1cc46d98e20"
+					message="Error occurred in updating device token - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="1da898de-ed01-4380-8327-aa47d6451f78">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Device Token Update Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

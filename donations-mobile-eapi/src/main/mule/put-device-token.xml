@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="put-device-token-flow" doc:id="c7b680c8-f91e-4cee-8eb8-00debc656d26" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="0da150b7-c855-424f-bfdd-94a12b315d89" message="START put-device-token-flow"/>
+		<http:request method="PUT" doc:name="donations-papi - Update Token" doc:id="5570cc07-dca1-48fc-a154-7e5d374e5268" config-ref="HTTP_Request_Donations_PAPI_configuration" path="${donations-papi.update-token-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}"/>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="45ffd1bd-f8bb-4ea9-8ad4-01ee6939c2cf" message="API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="a3f2215a-0f03-49d6-824e-530bb855eee3" message="END put-device-token-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f50fc8c4-a7dc-423d-81a3-616d50e4e917" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="410917b4-f480-4811-8035-5c6db6fe450e"
+					message="Error occurred in updating device token - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="7b487cf6-b4ad-41be-8124-10f46d9ec5ef">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Device Token Update Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

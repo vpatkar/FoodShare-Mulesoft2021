@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="put-donation-item-flow" doc:id="738fd2fc-089c-4b35-9cf4-5f6a4c253a7c" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="ca990e62-b81c-4005-8616-76d9f263e7fc" message="START put-donation-item-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="09632a16-b159-417a-9602-8b892a643ade" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="vDonationItemID" ><![CDATA[attributes.uriParams.'donationItemID']]></ee:set-variable>
+				<ee:set-variable variableName="vSAPIRequestJSON" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: payload.itemStatus,
+	beneficiaryID: payload.beneficiaryID
+}]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<http:request method="PUT" doc:name="donations-sapi : Update Donation Item" doc:id="a17de2a2-7adf-486f-81ee-7919840adf62" config-ref="HTTP_Request_Donations_SAPI_configuration" path="${donations-sapi.update-donation-item-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}">
+			<http:body ><![CDATA[#[vars.vSAPIRequestJSON]]]></http:body>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donationItemID" : vars.vDonationItemID
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="9f2cead4-1b49-4cd1-bf38-cf315afd4cdb" message="API Response is - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="2c2ab1c0-79d7-47f6-876e-e3c15ec6b500" message="END put-donation-item-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="dff75282-81e6-4848-8489-97577b66b239" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred in processing" doc:id="0865a39b-11ad-4d20-87a8-4d60e1e44c45" message="Error in updating donation item. Error is - #[error.description]"/>
+				<ee:transform doc:name="DW Map - Error Response" doc:id="16a85eac-29dd-45a0-be8f-862f09601e0a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Item could not be updated",
+	"errorMessage": error.description
+}
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

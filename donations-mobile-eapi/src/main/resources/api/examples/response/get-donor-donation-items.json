@@ -1,0 +1,41 @@
+{
+  "status": "S",
+  "message": "Donation Items fetched successfully",
+  "data": [
+    {
+      "beneficiaryFirstName": "Jobs",
+      "itemTitle": "Oranges",
+      "beneficiaryLastName": "Nikola",
+      "beneficiaryEmailAddress": "graham.nikola@grahamsitalian.com",
+      "dateCreated": "2021-10-21T16:51:35",
+      "beneficiaryEstablishmentPinCode": "TN9 1FX",
+      "beneficiaryEstablishmentCity": "Tonbridge",
+      "beneficiaryEstablishmentCountry": "UK",
+      "donationItemID": 7,
+      "beneficiaryEstalishmentStreet": "13 Redbud Road",
+      "itemShortDesc": "Fresh Apples",
+      "itemExpiryDate": "2021-10-22T16:51:35",
+      "donorID": "1",
+      "audioFilePath": "https://abc.com/asdsd/asddfd",
+      "beneficiaryEstalishmentName": "Graham's Italian",
+      "status": "SUBMITTED",
+      "beneficiaryID": 1,
+      "attachments": [
+        {
+          "fileName": "caramelCustard.jpg",
+          "donationItemID": 7,
+          "mimeType": "image/jpeg",
+          "donationItemAttachmentID": 4,
+          "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+        },
+        {
+          "fileName": "appluePIe.jpg",
+          "donationItemID": 7,
+          "mimeType": "image/jpeg",
+          "donationItemAttachmentID": 5,
+          "url": "https://abc.eu-west-2.amazonaws.com/pie.png"
+        }
+      ]
+    }
+  ]
+}

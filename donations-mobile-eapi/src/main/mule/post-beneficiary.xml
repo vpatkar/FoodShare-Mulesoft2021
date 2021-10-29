@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="post-beneficiary-flow"
+		doc:id="a14ad889-e174-4ef5-91f7-b0d0dfe519c0">
+		<logger level="INFO" doc:name="LOG INFO Start"
+			doc:id="954d2b82-5f5e-4b11-a68b-c12222f5928e"
+			message="START  post-beneficiary-flow" />
+		<http:request method="POST" doc:name="beneficiary-sapi : Register new Beneficiary" doc:id="9e0840dd-c4b0-4dc3-a092-296134a075b5" config-ref="HTTP_Request_Beneficiary_SAPI_configuration" path="${beneficiary-sapi.post-beneficiaries-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${http.request.response-timeout}"/>
+		<logger level="INFO" doc:name="LOG INFO Response" doc:id="55b24bbf-dd9e-48a9-a89d-ca22510f7f5b" message="Beneficiary System API Response - #[payload]"/>
+		<logger level="INFO" doc:name="LOG INFO End"
+			doc:id="b6642efe-0f58-4e08-9c5f-ab1fa1cff8c2"
+			message="END  post-beneficiary-flow" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true"
+				logException="true" doc:name="On Error Propagate"
+				doc:id="cc9f76db-1070-4649-99ce-13a0788ee4aa" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="852156fc-de1a-42a5-a265-efc9542023e0"
+					message="Error occurred in registering a new Beneficiary in the system - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="3e390e60-eed2-4211-b378-1c38649e15ae">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary Registration Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

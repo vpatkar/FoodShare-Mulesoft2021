@@ -1,0 +1,21 @@
+{
+  "status": "S",
+  "message": "Donor details fetched successfully",
+  "data": {
+    "donorID": "4",
+    "donorDeviceToken": "AC243g34t3413",
+    "firstName": "Crul",
+    "lastName": "Bentley",
+    "mobileNumber": "3455612375",
+    "emailAddress": "tim.bentley@grahamsitalian.com",
+    "establishmentName": "Graham's Italian",
+    "establishmentRegistrationNumber": "R12334",
+    "establishmentLogoURL": "https://dfdfd.com/logo.png",
+    "establishmentCountry": "India",
+    "establishmentCity": "Pune",
+    "establishmentStreet": "MG Road",
+    "establishmentPinCode": "400056",
+    "latitude": "30.4",
+    "longitude": "20.1"
+  }
+}

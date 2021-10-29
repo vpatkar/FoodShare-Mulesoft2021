@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get-beneficiaries-by-geolocation-flow" doc:id="a2753710-fc9a-4cab-9a0d-cc76c81a576d" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="0ebb8c45-e91c-4219-938c-a00b1632965c" message="START get-beneficiaries-by-geolocation-flow"/>
+		<ee:transform doc:name="DW Map - vBenficiariesRequestData" doc:id="3451fc5a-b3cf-4ab8-b498-fd0b89f9a42d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vBeneficiariesRequestData" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"donorLatitude": attributes.headers.'x-latitude',
+	"donorLongitude": attributes.headers.'x-longitude',
+	"radius": attributes.headers.'x-radius'
+}]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Beneficiaries by GeoProximity" doc:id="4290e022-a428-418a-8083-742bf0dd5245" config-ref="Beneficiary_Database_Config" target="vBeneficiariesResponse">
+			<db:sql ><![CDATA[SELECT
+beneficiaryID,
+    deviceToken,
+    firstName,
+    lastName,
+    mobileNumber,
+    emailAddress,
+    establishmentName,
+    establishmentRegistrationNumber,
+    establishmentLogoURL,
+    establishmentCountry,
+    establishmentCity,
+    establishmentStreet,
+    establishmentPinCode,
+    latitude,
+    longitude,
+    ACOS( SIN( RADIANS( latitude ) ) * SIN( RADIANS( :donorLatitude) ) + COS( RADIANS( latitude ) )
+* COS( RADIANS( :donorLatitude )) * COS( RADIANS( longitude ) - RADIANS( :donorLongitude )) ) * 6380 AS distance
+FROM 
+	beneficiary
+WHERE
+
+ 
+ ACOS( SIN( RADIANS( latitude ) ) * SIN( RADIANS( :donorLatitude ) ) + COS( RADIANS( latitude ) )
+* COS( RADIANS( :donorLatitude)) * COS( RADIANS( longitude ) - RADIANS( :donorLongitude )) ) * 6380 < :radius]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vBeneficiariesRequestData]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="DW Map - vBeneficiariesResponse to JSON" doc:id="e96678cb-65b1-4c22-8839-f8465c06ddf6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vBeneficiariesResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vBeneficiariesResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		
+		<choice doc:name="Beneficiary Details Fetched?" doc:id="7903e49b-1b61-40ca-ad88-d68751eb0020" >
+			<when expression="#[vars.vBeneficiariesResponse[0] != null]">
+				<ee:transform doc:name="DW Map : Success Response" doc:id="f2349917-ef3b-4278-b3f9-005f820026cc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Beneficiary details fetched successfully",
+	"data": vars.vBeneficiariesResponse map(beneficiary, index) -> {
+		"beneficiaryID": beneficiary.beneficiaryID as String,
+		"beneficiaryDeviceToken": beneficiary.deviceToken,
+		"firstName": beneficiary.firstName,
+		"lastName": beneficiary.lastName,
+		"mobileNumber": beneficiary.mobileNumber,
+		"emailAddress": beneficiary.emailAddress,
+		"establishmentName": beneficiary.establishmentName,
+		"establishmentRegistrationNumber": beneficiary.establishmentRegistrationNumber,
+		"establishmentLogoURL": beneficiary.establishmentLogoURL,
+		"establishmentCountry": beneficiary.establishmentCountry,
+		"establishmentCity": beneficiary.establishmentCity,
+		"establishmentStreet": beneficiary.establishmentStreet,
+		"establishmentPinCode": beneficiary.establishmentPinCode,
+		"latitude": beneficiary.latitude,
+		"longitude": beneficiary.longitude,
+		"distance" : beneficiary.distance as String
+	}
+}
+
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="DW Map : Database Response - No Records" doc:id="e6fb6d61-1cf3-441b-984d-f76a1bbc16e8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary details not found",
+	"errorMessage": "No Beneficiary found in proximity to the geolocation"
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="0e417fa4-f4ce-4ffa-af06-381688b49c00" message="END get-beneficiaries-by-geolocation-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8509b2fd-8046-41ac-8d1f-f83c312fc640" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="2e1d9e98-7fa1-4892-b0da-becb5d37f643"
+					message="Error occurred in fetching Beneficiary details - #[error.description]" />
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="6dc4f124-19b7-478c-afa6-4cd75f442cc5">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Beneficiary details not fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

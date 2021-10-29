@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-beneficiary-donation-items-flow" doc:id="60922002-a854-4492-8969-58b60ccb7f8e" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="922c8cac-aa05-463a-9769-92ed13c597e9" message="START get-beneficiary-donation-items-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="b01617e6-0cba-414b-ac0a-02ea45e5c57d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="vBeneficiaryID" ><![CDATA[attributes.uriParams.'beneficiaryID']]></ee:set-variable>
+				<ee:set-variable variableName="vSearchRadius" ><![CDATA[attributes.queryParams.'radius' default 10]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="donations-sapi : Beneficiary Donation Items" doc:id="989cc59a-0f7b-4221-b371-3f6abbc64019" config-ref="HTTP_Request_Donations_SAPI_configuration" path="${donations-sapi.get-beneficiary-donation-items-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"beneficiaryID" : vars.vBeneficiaryID
+}]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"radius" : vars.vSearchRadius
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="61558e0b-7374-4892-b6f6-b50824842575" message="END get-beneficiary-donation-items-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8f1a52ed-e394-4c20-ac40-ceed5cdb801b" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="2bc42e75-64eb-4cea-b801-991c832dc939"
+					message="Error occurred in fetching donation Items - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="58390de0-55a6-4375-b614-8c237a42550a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Items could not be fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

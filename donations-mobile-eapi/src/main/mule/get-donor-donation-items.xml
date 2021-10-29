@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-donor-donation-items-flow" doc:id="f86b511d-f71e-4a4d-8ceb-53257f05f6f6" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="31a1d487-a019-4c9d-ab88-3a563e56f71c" message="START get-donor-donation-items-flow"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="DW Map - Request Payload" doc:id="297960ce-be3f-4dbb-96c7-483279cf647c">
+            <ee:variables>
+				<ee:set-variable variableName="vDonorID" ><![CDATA[attributes.uriParams.'donorID']]></ee:set-variable>
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            
+</ee:variables>
+        </ee:transform>
+		<http:request method="GET" doc:name="donations-sapi : Fetch Donation Items" doc:id="7db0e0c5-53c1-4f27-9c01-bdfba102caea" config-ref="HTTP_Request_Donations_SAPI_configuration" path="${donations-sapi.get-donor-donations-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" target="vDonationItemsResponse" responseTimeout="${http.request.response-timeout}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donorID" : vars.vDonorID
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="LOG INFO vDonationItemsResponse" doc:id="220f2ef4-97d4-4591-b873-d33088b0ed0b" message="vDonationItemsResponse - #[vars.vDonationItemsResponse]"/>
+		<ee:transform doc:name="DW Map : Response" doc:id="62c4b899-87f6-46d0-9b50-2bed08f5bd7a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonationItemsResponse]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="fed3e3d6-0710-4ace-87ec-652f5a4f39a8" message="END get-donor-donation-items-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a26f8885-482e-41ce-8589-fb7cfc2f8955" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="a8325887-3c82-4936-a120-47026674f97c"
+					message="Error occurred in fetching donationItems - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="c626db5f-13f3-434a-a0fc-806ebe3dae8a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Items could not be fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

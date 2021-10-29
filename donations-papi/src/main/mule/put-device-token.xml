@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="put-device-token-flow" doc:id="c797e5f6-2ce0-41ea-8237-14974d6e4e81" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="753c3b9b-77cd-4b13-bdae-04c5ffcac5d0" message="START put-device-token-flow"/>
+		<ee:transform doc:name="DW Map - Request" doc:id="ec34beb0-dcc6-4324-9444-e9f22667253e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Device token for Beneficiary or Donor?" doc:id="57edab86-4f72-4b37-a1fa-1e4c789ae0ff" >
+			<when expression="#[vars.vOriginalPayload.'type' == 'Donor']">
+				<logger level="INFO" doc:name="LOG INFO - Donor" doc:id="3a421725-2a65-4b06-973a-5af153b72c55" message="Donor FLowx`"/>
+				<http:request method="PUT" doc:name="Donor - Update Token" doc:id="eaaf60bf-4115-4ef9-a02c-728c9226e2a4" config-ref="HTTP_Request_Donor_SAPI_configuration" path="${donor-sapi.put-device-token-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]">
+					<http:body ><![CDATA[#[vars.vOriginalPayload]]]></http:body>
+					<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"donorID" : vars.vOriginalPayload.id
+}]]]></http:uri-params>
+				</http:request>
+				<logger level="INFO" doc:name="LOG INFO API Response" doc:id="aa4049a1-7487-4f6e-99c9-6bc425e9fef2" message="API Response -#[payload]"/>
+			</when>
+			<when expression="#[vars.vOriginalPayload.'type' == 'Beneficiary']">
+				<logger level="INFO" doc:name="LOG INFO - Beneficiary" doc:id="37602279-66ba-437a-b3ad-288620b7a9a5" message=" Beneficiary Flow"/>
+				<http:request method="PUT" doc:name="Beneficiary- Update Token" doc:id="da0e719b-0978-4035-81e1-8291e545f08b" config-ref="HTTP_Request_Beneficiary_SAPI_configuration" path="${beneficiary-sapi.put-device-token-path}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]">
+					<http:body ><![CDATA[#[vars.vOriginalPayload]]]></http:body>
+					<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"beneficiaryID" : vars.vOriginalPayload.id
+}]]]></http:uri-params>
+				</http:request>
+				<logger level="INFO" doc:name="LOG INFO API Response" doc:id="8da6fcc6-6b2b-4124-aa3a-4e9ba9060b0c" message="API Response -#[payload]"/>
+			</when>
+			<otherwise >
+				<logger level="ERROR" doc:name="LOG ERROR Type not present in the request" doc:id="60a96036-1a84-4046-826b-89bdc6501387" message="Type not present in the JSON Request"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="e29f1d27-98d8-45ac-92ff-0b1ec9b22db1" message="END put-device-token-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="db16d708-5d35-4541-861c-6015b24cbc45" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="02e111c9-05ff-4ab3-ad14-9d3d4e333956"
+					message="Error occurred in updating device token - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="8b01d00b-99de-4a4d-baaf-1c51b9af8ce1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Device Token Update Failed",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

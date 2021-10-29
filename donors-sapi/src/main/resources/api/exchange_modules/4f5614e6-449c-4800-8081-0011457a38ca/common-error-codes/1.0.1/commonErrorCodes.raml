@@ -1,0 +1,24 @@
+#%RAML 1.0 Trait
+responses:
+  400:
+    body:
+      application/json:
+        type: CommonError
+        examples: 
+          example1: !include error400.raml
+ 
+  404:
+    body:
+      application/json:
+        type: CommonError
+        examples: 
+          example1: !include error404.raml
+          
+  500:
+    body:
+      application/json:
+        type: CommonError
+        examples:
+          example1:  !include error500.raml
+
+  

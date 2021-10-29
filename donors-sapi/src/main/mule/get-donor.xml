@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="get-donor-flow" doc:id="6d42dd86-000e-42ef-81f2-11b508a115fa" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="16777504-4030-4894-aece-48c950e2f51c" message="START  get-donor-flow"/>
+		<ee:transform doc:name="DW Map : Database Request" doc:id="2b6ef065-416b-4544-8441-b932aecb6f90" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDBRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	donorID: attributes.uriParams.'donorID' default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Donor" doc:id="5ef5118d-be0e-4d7f-8169-6b7065ee02f5" config-ref="Donor_Database_Config" target="vDBResponse">
+			<db:sql ><![CDATA[SELECT donorID,
+    deviceToken,
+    firstName,
+    lastName,
+    mobileNumber,
+    emailAddress,
+    establishmentName,
+    establishmentRegistrationNumber,
+    establishmentLogoURL,
+    establishmentCountry,
+    establishmentCity,
+    establishmentStreet,
+    establishmentPinCode,
+    latitude,
+    longitude
+FROM sys.donor where donorID = :donorID
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vDBRequest]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Donor Details Fetched?" doc:id="5b44ae2d-b7ac-43d5-92e8-a2433fbebd29" >
+			<when expression="#[vars.vDBResponse[0] != null]">
+				<ee:transform doc:name="DW Map : Success Response" doc:id="eec10140-fb3f-4924-a51a-874b5506ec7a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var donorDetails = vars.vDBResponse[0]
+---
+{
+	"status": "S",
+	"message": "Donor details fetched successfully",
+	"data": {
+		"donorID": donorDetails.donorID as String,
+		"donorDeviceToken": donorDetails.deviceToken,
+		"firstName": donorDetails.firstName,
+		"lastName": donorDetails.lastName,
+		"mobileNumber": donorDetails.mobileNumber,
+		"emailAddress": donorDetails.emailAddress,
+		"establishmentName": donorDetails.establishmentName,
+		"establishmentRegistrationNumber": donorDetails.establishmentRegistrationNumber,
+		"establishmentLogoURL": donorDetails.establishmentLogoURL,
+		"establishmentCountry": donorDetails.establishmentCountry,
+		"establishmentCity": donorDetails.establishmentCity,
+		"establishmentStreet": donorDetails.establishmentStreet,
+		"establishmentPinCode": donorDetails.establishmentPinCode,
+		"latitude" : donorDetails.latitude,
+		"longitude" : donorDetails.longitude
+	}
+}
+
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="DW Map : Database Response - No Records" doc:id="f674ba5e-ee7f-4fcf-a36c-b8cab7f3f1a1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor details not found",
+	"data": vars.vDBResponse[0] default null
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="d21c3970-a23d-4852-b4cc-2d948aa37420" message="END  get-donor-flow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="08e589dd-178c-43cd-b0fc-fe95091240cd" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred" doc:id="e3c551d0-717d-4a0f-a342-5fd45cabec5b" message="Error occurred in fetching donor details - #[error.description]"/>
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="5e36d608-647e-4c7b-9286-06310e23c9d3">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor details not fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

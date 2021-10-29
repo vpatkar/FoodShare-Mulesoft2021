@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <!--   <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="dfcf0105-6734-4861-bfd4-33d76b116c2f" flowRef="donations-mobile-eapi-main" /> -->
+    <flow name="donations-mobile-eapi-main">
+        <http:listener path="/api/*" config-ref="donations-mobile-eapi-httpListenerConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="donations-mobile-eapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\donors:application\json:donations-mobile-eapi-config">
+        <flow-ref doc:name="post-donors-flow" doc:id="d060e00a-df8e-4b5b-becc-d17882c129a6" name="post-donors-flow" />
+    </flow>
+    <flow name="post:\donors\(donorID)\donationItems:application\json:donations-mobile-eapi-config">
+        <flow-ref doc:name="post-donation-items-flow" doc:id="0fb5ecab-8665-49c8-9a25-dc6906e46fa8" name="post-donation-items-flow" />
+    </flow>
+    <flow name="post:\beneficiary:application\json:donations-mobile-eapi-config">
+        <flow-ref doc:name="post-beneficiary-flow" doc:id="eb12a74c-d4e4-4dc0-b13e-a935eea73833" name="post-beneficiary-flow" />
+    </flow>
+    <flow name="put:\donationItems\(donationItemID):application\json:donations-mobile-eapi-config">
+        <flow-ref doc:name="put-donation-item-flow" doc:id="f74165d6-7301-4bc1-a58c-d98a2d94c524" name="put-donation-item-flow" />
+    </flow>
+    <flow name="get:\donors\(donorID)\donationItems:donations-mobile-eapi-config">
+        <flow-ref doc:name="get-donor-donation-items-flow" doc:id="5f1e3e7f-aee8-4b12-9361-bda271e3c547" name="get-donor-donation-items-flow" />
+    </flow>
+    <flow name="get:\beneficiary\(beneficiaryID)\donationItems:donations-mobile-eapi-config">
+        <flow-ref doc:name="get-beneficiary-donation-items-flow" doc:id="0a2bea51-b438-43c2-9483-5787f580fb06" name="get-beneficiary-donation-items-flow" />
+    </flow>
+    <flow name="put:\device-token:application\json:donations-mobile-eapi-config">
+        <flow-ref doc:name="put-device-token-flow" doc:id="cf6c1e25-0ea2-4acf-8784-c2c7734cb42a" name="put-device-token-flow" />
+    </flow>
+    <flow name="get:\donors\(donorID):donations-mobile-eapi-config">
+        <flow-ref doc:name="get-donors-flow" doc:id="a58e254a-24d1-4df4-8867-64368d117f39" name="get-donors-flow" />
+    </flow>
+    <flow name="get:\beneficiary\(beneficiaryID):donations-mobile-eapi-config">
+        <flow-ref doc:name="get-beneficiary-flow" doc:id="2308c7e9-bcca-4354-8f0e-974b343beea2" name="get-beneficiary-flow" />
+    </flow>
+    <flow name="post:\attachments:donations-mobile-eapi-config">
+		<flow-ref doc:name="post-attachments-flow" doc:id="1365a156-0c93-41fd-a751-9c3e6f8ea904" name="post-attachments-flow"/>
+    </flow>
+</mule>

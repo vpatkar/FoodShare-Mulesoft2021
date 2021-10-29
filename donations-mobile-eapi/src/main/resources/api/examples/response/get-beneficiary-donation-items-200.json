@@ -1,0 +1,42 @@
+{
+  "status": "S",
+  "message": "Donation Items fetched successfully",
+  "data": [
+    {
+      "donorEstablishmentCity": "Tonbridge",
+      "distance": 3270.4058471185594,
+      "itemTitle": "Mava Cake",
+      "donorEmailAddress": "graham.nikola@grahamsitalian.com",
+      "dateCreated": "2021-10-21T11:53:03",
+      "donorFirstName": "Paras",
+      "donorEstablishmentStreet": "13 Redbud Road",
+      "donorEstablishmentCountry": "UK",
+      "donationItemID": 1,
+      "itemShortDesc": "Awsome Mava Cake available for you",
+      "donorEstablishmentName": "Graham's Italian",
+      "itemExpiryDate": "2021-10-22T11:53:03",
+      "donorID": 2,
+      "audioFilePath": "https://abc.com/asdsd/asddfd",
+      "donorMobileNumber": "3455612375",
+      "donorLastName": "Kuruvilla",
+      "status": "SUBMITTED",
+      "beneficiaryID": null,
+      "attachments": [
+        {
+          "fileName": "caramelCustard.jpg",
+          "donationItemID": 1,
+          "mimeType": "image/jpeg",
+          "donationItemAttachmentID": 2,
+          "url": "https://abc.eu-west-2.amazonaws.com/caramelCustard.png"
+        },
+        {
+          "fileName": "appluePIe.jpg",
+          "donationItemID": 1,
+          "mimeType": "image/jpeg",
+          "donationItemAttachmentID": 3,
+          "url": "https://abc.eu-west-2.amazonaws.com/pie.png"
+        }
+      ]
+    }
+  ]
+}

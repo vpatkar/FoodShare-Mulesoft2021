@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="get-beneficiary-donation-items-flow" doc:id="d5898531-254d-4c86-bfe6-5f679159d371" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d197667d-0bfa-42bc-bf45-658d39e26283" message="START get-beneficiary-donation-items-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="ffeef409-0602-4f23-8506-237ce712a269" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vOriginalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="vBeneficiaryID" ><![CDATA[attributes.uriParams.'beneficiaryID']]></ee:set-variable>
+				<ee:set-variable variableName="vSearchRadius" ><![CDATA[attributes.queryParams.'radius' default 10]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="fetch-beneficiary-coordinates-sub-flow" doc:id="ba8f5265-e637-45f8-b897-a8df7557a8da" name="fetch-beneficiary-coordinates-sub-flow"/>
+		<ee:transform doc:name="DW Map - vDonationItemsRequestData" doc:id="8fb03259-085b-4d60-8627-7f08fec6d896" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonationItemsRequestData" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"beneficiaryLatitude": vars.vBeneficiaryResponse.latitude,
+	"beneficiaryLongitude": vars.vBeneficiaryResponse.longitude,
+	"radius": vars.vSearchRadius
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="donationItems" doc:id="407d9c9d-c519-4047-9dfd-1d8fdc11c07d" config-ref="DonationItem_Database_Config" target="vDonationItemsResponse">
+			<db:sql ><![CDATA[SELECT
+donationItemID,
+itemTitle,
+itemShortDesc,
+dateCreated,
+status,
+itemExpiryDate,
+audioFilePath,
+d.donorID,
+d.establishmentName as donorEstablishmentName,
+d.firstName as donorFirstName,
+d.lastName as donorLastName,
+d.emailAddress as donorEmailAddress,
+d.mobileNumber as donorMobileNumber,
+d.establishmentStreet as donorEstablishmentStreet,
+d.establishmentCity as donorEstablishmentCity,
+d.establishmentCountry as donorEstablishmentCountry,
+beneficiaryID, 
+ACOS( SIN( RADIANS( latitude ) ) * SIN( RADIANS( :beneficiaryLatitude) ) + COS( RADIANS( latitude ) )
+* COS( RADIANS( :beneficiaryLatitude )) * COS( RADIANS( longitude ) - RADIANS( :beneficiaryLongitude )) ) * 6380 AS distance
+FROM 
+	donation_item di, 
+	donor d
+WHERE
+di.donorID = d.donorID 
+and status = 'SUBMITTED'
+and ACOS( SIN( RADIANS( latitude ) ) * SIN( RADIANS( :beneficiaryLatitude ) ) + COS( RADIANS( latitude ) )
+* COS( RADIANS( :beneficiaryLatitude)) * COS( RADIANS( longitude ) - RADIANS( :beneficiaryLongitude )) ) * 6380 < :radius]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vDonationItemsRequestData]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="DW Map - vDonationItemsResponse to JSON" doc:id="8ebdc82d-87e1-4ad7-892a-a61ba47a286e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vDonationItemsResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vDonationItemsResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="fetch-attachments-common-flow" doc:id="94c121d1-7af7-42fe-a49d-e34cdb12af1d" name="fetch-attachments-common-flow"/>
+		
+		
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="6f24ad9e-d3b5-4f19-9d1b-694500d4ed7a" message="END get-beneficiary-donation-items-flow" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6bf981ff-51c2-48ee-963c-0685be635913" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred"
+					doc:id="62500b9e-4917-4012-969e-bf87221ffeea"
+					message="Error occurred in fetching donationItems - #[error.description]" />
+				<ee:transform
+					doc:name="DW Map : Error Response"
+					doc:id="d63f01ea-517f-443b-abe4-18d0de3dc795">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Items could not be fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="fetch-beneficiary-coordinates-sub-flow" doc:id="7fe45066-464e-4334-b649-b1faec722679" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d457412e-5ee9-4cee-8424-ddc270fc875e" message="START fetch-beneficiary-coordinates-sub-flow"/>
+		<db:select doc:name="Beneficiary Coordinates" doc:id="329abbcc-2df6-4bd3-abcf-1ee4d158f093" config-ref="DonationItem_Database_Config" target="vBeneficiaryResponse">
+			<db:sql ><![CDATA[select beneficiaryID,latitude,longitude from beneficiary where beneficiaryID = :beneficiaryID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"beneficiaryID": vars.vBeneficiaryID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="DW Map - Beneficiary response to JSON" doc:id="50bc3241-889d-472c-b5e4-f811ba4f2642" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vBeneficiaryResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.vBeneficiaryResponse[0] default {}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="7f0ed50a-9e21-4fb4-97f4-b2364da8a66e" message="END fetch-beneficiary-coordinates-sub-flow"/>
+	</sub-flow>
+	
+</mule>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<sub-flow name="fetch-attachments-common-flow" doc:id="f931b93c-cd50-4889-aa87-1850df3bf382" >
+		<choice doc:name="Donation Items Fetched?" doc:id="130c992b-c226-4f5d-bfc7-e00bdf7e499e" >
+			<when expression="#[vars.vDonationItemsResponse[0] != null]">
+				<logger level="INFO" doc:name="LOG INFO Donation Items Present" doc:id="4dbca766-74bd-4b35-8198-73650dbd3c64" message="Donation Items Present."/>
+				<set-variable value="#[(vars.vDonationItemsResponse.*donationItemID joinBy  ',')]" doc:name="vDonationItemIDs" doc:id="02007380-561c-4724-92f8-182282626df2" variableName="vDonationItemIDs"/>
+				<db:select doc:name="Attachments" doc:id="d03e5d0e-6237-445d-942f-e47e756a4baa" config-ref="DonationItem_Database_Config" target="vAttachmentsResponse">
+			<db:sql><![CDATA[#["SELECT donationItemAttachmentID,donationItemID,fileName,mimeType,url FROM sys.donation_item_attachments where donationItemID in ( " ++ vars.vDonationItemIDs ++ " )"]]]></db:sql>
+		</db:select>
+				<ee:transform doc:name="DW Map - vAttachmentsResponse to JSON" doc:id="3de44d70-3d3c-4da4-bb92-15e04a3432df">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="vAttachmentsResponse"><![CDATA[%dw 2.0
+output application/json
+---
+vars.vAttachmentsResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO vAttachmentsResponse" doc:id="0c1bbab3-4622-4adc-9020-d7f9b3dcd54c" message="vAttachmentsResponse - #[vars.vAttachmentsResponse]"/>
+				<ee:transform doc:name="DW Map - Success Response" doc:id="7a70e0dc-18f1-4145-ad1a-86a982740cd6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var attachmentsByDonationItemID = (donationItemID) -> vars.vAttachmentsResponse filter($.donationItemID == donationItemID)
+---
+{
+	"status": "S",
+	"message": "Donation Items fetched successfully",
+	"data": vars.vDonationItemsResponse map (donationItem, index) -> {
+		((donationItem) ++ {
+			"attachments": attachmentsByDonationItemID(donationItem.donationItemID)
+		})
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+							
+
+</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO Donation Items not found" doc:id="c271cafa-96c4-43f1-a77c-b5285012685d" message="Donation Items not fuond"/>
+				<ee:transform doc:name="DW Map : Error Response" doc:id="18135479-0712-459c-b900-9c4b4c1f3591">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donation Items could not be fetched",
+	"errorMessage": "No Donations Items found in the system"
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>
