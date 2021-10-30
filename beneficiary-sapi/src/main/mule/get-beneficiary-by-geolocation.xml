@@ -39,6 +39,7 @@ beneficiaryID,
     establishmentPinCode,
     latitude,
     longitude,
+    notificationEndpoint,
     ACOS( SIN( RADIANS( latitude ) ) * SIN( RADIANS( :donorLatitude) ) + COS( RADIANS( latitude ) )
 * COS( RADIANS( :donorLatitude )) * COS( RADIANS( longitude ) - RADIANS( :donorLongitude )) ) * 6380 AS distance
 FROM 
@@ -87,6 +88,7 @@ output application/json
 		"establishmentPinCode": beneficiary.establishmentPinCode,
 		"latitude": beneficiary.latitude,
 		"longitude": beneficiary.longitude,
+		"notificationEndpoint": beneficiary.notificationEndpoint,
 		"distance" : beneficiary.distance as String
 	}
 }
