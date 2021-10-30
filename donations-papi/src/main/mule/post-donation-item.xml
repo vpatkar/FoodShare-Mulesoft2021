@@ -115,6 +115,34 @@ vars.vGeoproximityBeneficiariesResponse]]></ee:set-variable>
 	</sub-flow>
 	<sub-flow name="send-notification-beneficiaries-sub-flow" doc:id="d125e6e0-f5d5-4bb7-9094-8262e3446c86" >
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="99f57d10-3565-4230-9017-0e1163bac3dc" message="START send-notification-beneficiaries-sub-flow"/>
+		<ee:transform doc:name="DW Map - notification API Payload" doc:id="0d2eb67b-a32e-4d5c-9b39-172c44a73feb" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vPushNotificationRequest" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"donationItemID": vars.vDonationItemSAPIReponse.data.donationItemID,
+	"donorID": vars.vDonorID,
+	// "donorEstablishmentName": vars.vOriginalPayload.establishmentName,
+	"itemTitle": vars.vOriginalPayload.itemTitle,
+	"itemShortDesc": vars.vOriginalPayload.itemShortDesc,
+	"beneficiaryDeviceEndpointList": vars.vGeoproximityBeneficiariesResponse.data..*notificationEndpoint default []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="44731824-5c52-4c45-b432-9877a01a0f8f" >
+			<http:request method="POST" doc:name="notification-sapi : Push Mobile Notifications" doc:id="8810c643-743e-4fb0-98ea-8b17ce289a7a" config-ref="HTTP_Request_Notifications_SAPI_configuration" path="${notifications-sapi.post-notifications}" sendCorrelationId="ALWAYS" correlationId="#[correlationId]">
+			<http:body><![CDATA[#[vars.vPushNotificationRequest]]]></http:body>
+		</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="bc20b6eb-effb-4402-9dcf-ca8634653b65" type="ANY">
+					<logger level="ERROR" doc:name="LOG ERROR" doc:id="3e33b035-f2af-4729-a363-5081730c2921" message="Error from Notification API - #[error.muleMessage.typedValue]"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="LOG INFO - notifications sAPI response" doc:id="a8644daa-d4c4-4b36-a7a6-9585b15e266e" message="notifications sAPI response - #[payload]"/>
 		<logger level="INFO" doc:name="LOG INFO End" doc:id="40202895-2708-4fa5-a2f0-7f6c3ecfc297" message="END send-notification-beneficiaries-sub-flow"/>
 	</sub-flow>
 </mule>

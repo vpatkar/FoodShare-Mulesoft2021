@@ -39,6 +39,15 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<http:request-connection
 			host="${beneficiary-sapi.host}" port="${beneficiary-sapi.port}" />
 	</http:request-config>
+	
+	<http:request-config
+		name="HTTP_Request_Notifications_SAPI_configuration"
+		doc:name="HTTP_Request_Notifications_SAPI_configuration"
+		doc:id="4c00079c-de81-4dce-8683-ea03c9d67141">
+		<http:request-connection
+			host="${notifications-sapi.host}" port="${notifications-sapi.port}" />
+	</http:request-config>
+	
 	<configuration-properties
 		doc:name="Configuration properties"
 		doc:id="387c39f5-b92d-4e53-98bf-69081beb5928"

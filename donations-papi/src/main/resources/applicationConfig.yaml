@@ -21,6 +21,9 @@ beneficiary-sapi:
   put-device-token-path: "/api/beneficiary/{beneficiaryID}/device-token"
   search-radius: "4000"
 
-    
+notifications-sapi:
+  host: "notifications-sapi.us-e2.cloudhub.io"
+  port: "80"
+  post-notifications: "/api/push-notifications"    
   
   
