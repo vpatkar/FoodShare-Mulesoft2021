@@ -1,0 +1,10 @@
+{
+  "donationItemID": "3",
+  "donorID": "4",
+  "donorEstablishmentName": "Graham's Italian",
+  "itemTitle": "Tomato cheesecake",
+  "itemShortDesc": "Awsome Tomato cheesecake available for you",
+  "beneficiaryDeviceEndpointList": [
+    "arn:aws:sns:ap-south-1:211728108065:endpoint/GCM/FoodShareSNSPlatformApp/a514b295-0fd2-33d0-b115-039199cce2de"
+  ]
+}

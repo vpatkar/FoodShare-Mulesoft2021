@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sns="http://www.mulesoft.org/schema/mule/sns"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/current/mule-sns.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="post-notifications-flow" doc:id="27082314-9243-40de-b59f-ad3bf49af3e0" >
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="9917a173-5427-4de6-8561-f9863295fab6" message="START post-notifications-flow"/>
+		<ee:transform doc:name="DW Map - JSON to String" doc:id="36f3d7ec-0761-4197-bbb9-bf3132ab352f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vSNSMessage" ><![CDATA[%dw 2.0
+output application/json
+---
+write((payload - "beneficiaryDeviceEndpointList"),"application/json")]]></ee:set-variable>
+				<ee:set-variable variableName="vBeneficiaryDeviceEndpointList" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.beneficiaryDeviceEndpointList]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parallel-foreach doc:name="Parallel For Each - Beneficiary Mobile Push Notification" doc:id="d387a80e-0cfd-45da-b62c-5e1621e883e2" collection="#[vars.vBeneficiaryDeviceEndpointList]" timeout="10000" maxConcurrency="5">
+			<logger level="INFO" doc:name="LOG INFO - Sending Mobile Push Notification" doc:id="a172db3c-aaf5-4b11-83a2-f44dc40ce756" />
+			<sns:publish doc:name="Mobile Push Notification Endpoint" doc:id="c683898b-579c-40db-89f2-a7519d7ca089" config-ref="Amazon_SNS_configuration" targetArn="#[payload]" subject="#['Test Message']">
+			<sns:message><![CDATA[#[vars.vSNSMessage]]]></sns:message>
+		</sns:publish>
+		</parallel-foreach>
+		
+		<ee:transform doc:name="DW Map - Success Response" doc:id="97399075-0410-44fb-a21e-9ccb4b2ba167" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "S",
+	"message": "Mobile Push Notifications sent successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="84c66350-724d-42eb-a7e2-a4881af40c01" message="END post-notifications-flow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b4b91716-6bbc-4b28-a06e-83ed003b99d2" type="ANY">
+				<logger level="ERROR" doc:name="LOG ERROR Error Occurred" doc:id="46104b46-a0be-44c7-a0ff-8b54c2bcebf6" message="Error occurred in sending notification to beneficiaries- #[error.description]"/>
+				<ee:transform doc:name="DW Map : Database Response - Error" doc:id="0701d5d8-e0c5-479a-a265-04f6ccd89f40">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "F",
+	"message": "Donor details not fetched",
+	"errorMessage": error.description
+}
+
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

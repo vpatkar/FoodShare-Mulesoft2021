@@ -1,0 +1,19 @@
+#%RAML 1.0
+title: notifications-sapi
+version: v1
+description: FoodShare API that will be used to send notifications
+annotationTypes:
+  
+/push-notifications:
+  post:
+    description: API endpoint that will be used to send mobile push notifications via SNS
+    displayName: API endpoint that will be used to send mobile push notifications via SNS
+    body:
+      application/json:
+        example: !include examples/post-push-notifications-request.json
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include examples/post-push-notifications-response.json
+                    
