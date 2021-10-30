@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sns="http://www.mulesoft.org/schema/mule/sns" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/current/mule-sns.xsd">
+	<flow name="datasync-rds-sns-app-flow" doc:id="5b9df13c-a8b5-47d0-a8c9-9adca812649f" >
+		<db:listener doc:name="New Beneficiary" doc:id="f16bfd8f-eb1c-4e0f-9bd1-78a8d84b06f3" config-ref="Beneficiary_Database_Config" table="beneficiary" idColumn="beneficiaryID" watermarkColumn="beneficiaryID">
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</db:listener>
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d510bdf8-9584-479f-a8b6-71516fbc5a73" message="START datasync-rds-sns-app-flow"/>
+		<ee:transform doc:name="DW Map - Request Data" doc:id="03caae76-8f6d-43b0-af52-ae7aeeb21395" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vBeneficiaryRecord" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="DW Map - Request Payload to SNS" doc:id="b222ca0f-cac3-4519-9685-4cea51954730" message="Request Payload to SNS - #[vars.vBeneficiaryRecord]"/>
+		<sns:create-platform-endpoint doc:name="Mobile Push Notification Endpoint" doc:id="f1d4481b-5aa8-4568-920f-a48b1e93abab" config-ref="Amazon_SNS_configuration" platformApplicationArn="arn:aws:sns:ap-south-1:211728108065:app/GCM/FoodShareSNSPlatformApp" token="#[vars.vBeneficiaryRecord.deviceToken]" customUserData="#[vars.vBeneficiaryRecord.deviceToken]"/>
+		<ee:transform doc:name="DW Map - SNS Response to JSON" doc:id="80acb1ec-6452-49a2-8272-636d7a72293a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vEndpointARN" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO - vEndpointARN" doc:id="2f3117bb-983f-442c-82cc-ec9af02b5426" message="vEndpointARN - #[vars.vEndpointARN]"/>
+		<db:update doc:name="beneficiary - notification endpoint ARN" doc:id="67dbf7b6-76fd-47d7-b28a-93773667b530" config-ref="Beneficiary_Database_Config">
+			<db:sql ><![CDATA[update beneficiary
+set notificationEndpoint = :endpointARN
+where beneficiaryID = :beneficiaryID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	endpointARN: vars.vEndpointARN,
+	beneficiaryID: vars.vBeneficiaryRecord.beneficiaryID
+}]]]></db:input-parameters>
+		</db:update>
+		<logger level="INFO" doc:name="LOG INFO End" doc:id="5cfda463-0d09-4731-babc-7e21f2a5f8a5" message="Record processed Successfully"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5fc3a37e-3188-40d0-acb4-afb6bf5acd9b" type="ANY">
+				<logger level="INFO" doc:name="LOG ERROR" doc:id="4f4597ca-4427-4dc3-aa67-d6a3e65193e1" message="Error occurred in synchronising platform endpoint ARN with RDS - #[error.description]"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

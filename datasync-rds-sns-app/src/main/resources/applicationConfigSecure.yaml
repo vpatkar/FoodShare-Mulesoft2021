@@ -1,0 +1,13 @@
+
+aws:
+  access-key: "![5yJUmplda6IWAIpHIfwDHf7ppUQQeDJk]"
+  secret-key: "![SuKjrSdlXfT35jREFRMojVnEVBvHAuk5aOaWVTp8CvRAtIVzRJ5wuHS3ViihC3uB]"
+  region: "![Qhd9IPUMFSQ=]"
+
+db:
+  host: "![7L7u5knEWSVKIO/rF5YdfLAtvjzWbRRWrqirfzH7saq4at8HA1N47y2EF9RhSitB0PClmdkjZlM=]"
+  port: "![bPbCOLPAWfg=]"
+  user: "![uMA/CmWVIOp80gP2lBv0EA==]"
+  password: "![kukA3ZDUVmms4Fd2MqkJDg==]"
+  database: "![H4caMO36u4k=]"
+
