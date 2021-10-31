@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "299290319164",
+    "project_id": "food-share-95e21",
+    "storage_bucket": "food-share-95e21.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299290319164:android:6874c33fc7d9f73e6d6639",
+        "android_client_info": {
+          "package_name": "com.example.ngo_food_help"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "299290319164-33fi4r4qoohn2ganats4miiktn4saubu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb53cbfn8gAQir6NDdPmFpIeuHkJGQ9M4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "299290319164-33fi4r4qoohn2ganats4miiktn4saubu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
