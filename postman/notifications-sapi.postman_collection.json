@@ -1,0 +1,69 @@
+{
+	"info": {
+		"_postman_id": "49ba9a78-2612-4630-ae6a-f4064dae52ea",
+		"name": "notifications-sapi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "POST Push Mobile Notifications LOCAL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"donationItemID\": \"3\",\r\n  \"donorID\": \"4\",\r\n  \"donorEstablishmentName\": \"Graham's Italian\",\r\n  \"itemTitle\": \"Tomato cheesecake\",\r\n  \"itemShortDesc\": \"Awsome Tomato cheesecake available for you\",\r\n  \"beneficiaryDeviceEndpointList\": [\r\n    \"arn:aws:sns:ap-south-1:211728108065:endpoint/GCM/FoodShareSNSPlatformApp/a514b295-0fd2-33d0-b115-039199cce2de\",\r\n    \"arn:aws:sns:ap-south-1:211728108065:endpoint/GCM/FoodShareSNSPlatformApp/a514b295-0fd2-33d0-b115-039199cce2de\"\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/push-notifications",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"push-notifications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST Push Mobile Notifications SANDBOX",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"donationItemID\": \"3\",\r\n  \"donorID\": \"4\",\r\n  \"donorEstablishmentName\": \"Graham's Italian\",\r\n  \"itemTitle\": \"Tomato cheesecake\",\r\n  \"itemShortDesc\": \"Awsome Tomato cheesecake available for you\",\r\n  \"beneficiaryDeviceEndpointList\": [\r\n    \"arn:aws:sns:ap-south-1:211728108065:endpoint/GCM/FoodShareSNSPlatformApp/a514b295-0fd2-33d0-b115-039199cce2de\",\r\n    \"arn:aws:sns:ap-south-1:211728108065:endpoint/GCM/FoodShareSNSPlatformApp/a514b295-0fd2-33d0-b115-039199cce2de\"\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://notifications-sapi.us-e2.cloudhub.io/api/push-notifications",
+					"protocol": "http",
+					"host": [
+						"notifications-sapi",
+						"us-e2",
+						"cloudhub",
+						"io"
+					],
+					"path": [
+						"api",
+						"push-notifications"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

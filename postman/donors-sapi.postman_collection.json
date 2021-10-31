@@ -1,0 +1,177 @@
+{
+	"info": {
+		"_postman_id": "6077bd10-effd-4df0-9ce8-b33b7f7cc0ce",
+		"name": "donors-sapi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register new Donor LOCAL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"donorDeviceToken\": \"AC23=59013\",\r\n    \"firstName\": \"Paras\",\r\n    \"lastName\": \"Kuruvilla\",\r\n    \"mobileNumber\": \"3455612375\",\r\n    \"emailAddress\": \"graham.nikola@grahamsitalian.com\",\r\n    \"establishmentName\": \"Graham's Italian\",\r\n    \"establishmentRegistrationNumber\": \"R12334\",\r\n    \"establishmentLogoURL\": \"https://dfdfd.com/logo.png\",\r\n    \"establishmentCountry\": \"UK\",\r\n    \"establishmentCity\": \"Tonbridge\",\r\n    \"establishmentStreet\": \"13 Redbud Road\",\r\n    \"establishmentPinCode\": \"TN9 1FX\",\r\n    \"latitude\" : \"30.4\",\r\n    \"longitude\" : \"20.1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/donors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"donors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register new Donor SANDBOX",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"donorDeviceToken\": \"AC243g34t3413\",\r\n    \"firstName\": \"Crul\",\r\n    \"lastName\": \"Bentley\",\r\n    \"mobileNumber\": \"3455612375\",\r\n    \"emailAddress\": \"tim.bentley@grahamsitalian.com\",\r\n    \"establishmentName\": \"Graham's Italian\",\r\n    \"establishmentRegistrationNumber\": \"R12334\",\r\n    \"establishmentLogoURL\": \"https://dfdfd.com/logo.png\",\r\n    \"establishmentCountry\": \"India\",\r\n    \"establishmentCity\": \"Pune\",\r\n    \"establishmentStreet\": \"MG Road\",\r\n    \"establishmentPinCode\": \"400056\",\r\n    \"latitude\" : \"30.4\",\r\n    \"longitude\" : \"20.1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://donors-sapi.us-e2.cloudhub.io/api/donors",
+					"protocol": "http",
+					"host": [
+						"donors-sapi",
+						"us-e2",
+						"cloudhub",
+						"io"
+					],
+					"path": [
+						"api",
+						"donors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Donor Details - LOCAL",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/api/donors/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"donors",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Donor Details - SANDBOX",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://donors-sapi.us-e2.cloudhub.io/api/donors/4",
+					"protocol": "http",
+					"host": [
+						"donors-sapi",
+						"us-e2",
+						"cloudhub",
+						"io"
+					],
+					"path": [
+						"api",
+						"donors",
+						"4"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Device Token SANDBOX",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"My123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://donors-sapi.us-e2.cloudhub.io/api/donors/1/device-token",
+					"protocol": "http",
+					"host": [
+						"donors-sapi",
+						"us-e2",
+						"cloudhub",
+						"io"
+					],
+					"path": [
+						"api",
+						"donors",
+						"1",
+						"device-token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Device Token LOCAL",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"APQWE23\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/donors/1/device-token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"donors",
+						"1",
+						"device-token"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

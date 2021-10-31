@@ -1,0 +1,261 @@
+{
+	"info": {
+		"_postman_id": "1609662c-cfb4-478f-8440-9ad6c0ca6318",
+		"name": "beneficiary-sapi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "LOCAL",
+			"item": [
+				{
+					"name": "Register new Beneficiary LOCAL",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"beneficiaryDeviceToken\": \"AC23=59013\",\r\n    \"firstName\": \"Juan\",\r\n    \"lastName\": \"Thomas\",\r\n    \"mobileNumber\": \"3455612375\",\r\n    \"emailAddress\": \"graham.nikola@grahamsitalian.com\",\r\n    \"establishmentName\": \"Graham's Italian\",\r\n    \"establishmentRegistrationNumber\": \"R12334\",\r\n    \"establishmentLogoURL\": \"https://dfdfd.com/logo.png\",\r\n    \"establishmentCountry\": \"UK\",\r\n    \"establishmentCity\": \"Tonbridge\",\r\n    \"establishmentStreet\": \"13 Redbud Road\",\r\n    \"establishmentPinCode\": \"TN9 1FX\",\r\n    \"latitude\": \"21.1\",\r\n    \"longitude\": \"42.7\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/beneficiary",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"beneficiary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Beneficiary Details - LOCAL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/beneficiary/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"beneficiary",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Beneficiaries by GeoProximity - LOCAL",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-latitude",
+								"value": "18.66",
+								"type": "text"
+							},
+							{
+								"key": "x-longitude",
+								"value": "73.80",
+								"type": "text"
+							},
+							{
+								"key": "x-radius",
+								"value": "15",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/beneficiary",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"beneficiary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Token - LOCAL",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"token\": \"New- sffddg3\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/beneficiary/2/device-token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"beneficiary",
+								"2",
+								"device-token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SANDBOX",
+			"item": [
+				{
+					"name": "Register new Beneficiary SANDBOX",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"beneficiaryDeviceToken\": \"AC23=59013\",\r\n    \"firstName\": \"Nick\",\r\n    \"lastName\": \"Jones\",\r\n    \"mobileNumber\": \"3455612375\",\r\n    \"emailAddress\": \"nick.jones@Food4thought.com\",\r\n    \"establishmentName\": \"Food4thought\",\r\n    \"establishmentRegistrationNumber\": \"R124334\",\r\n    \"establishmentLogoURL\": \"https://Food4thought.com/logo.png\",\r\n    \"establishmentCountry\": \"India\",\r\n    \"establishmentCity\": \"Pune\",\r\n    \"establishmentStreet\": \"TM ROad\",\r\n    \"establishmentPinCode\": \"400012\",\r\n    \"latitude\": \"21.4\",\r\n    \"longitude\": \"42.6\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://beneficiary-sapi.us-e2.cloudhub.io/api/beneficiary",
+							"protocol": "http",
+							"host": [
+								"beneficiary-sapi",
+								"us-e2",
+								"cloudhub",
+								"io"
+							],
+							"path": [
+								"api",
+								"beneficiary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Beneficiary Details - SANDBOX",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://beneficiary-sapi.us-e2.cloudhub.io/api/beneficiary/3",
+							"protocol": "http",
+							"host": [
+								"beneficiary-sapi",
+								"us-e2",
+								"cloudhub",
+								"io"
+							],
+							"path": [
+								"api",
+								"beneficiary",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Beneficiaries by GeoProximity - SANDBOX",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-latitude",
+								"value": "21.4",
+								"type": "text"
+							},
+							{
+								"key": "x-longitude",
+								"value": "42.7",
+								"type": "text"
+							},
+							{
+								"key": "x-radius",
+								"value": "15",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://beneficiary-sapi.us-e2.cloudhub.io/api/beneficiary",
+							"protocol": "http",
+							"host": [
+								"beneficiary-sapi",
+								"us-e2",
+								"cloudhub",
+								"io"
+							],
+							"path": [
+								"api",
+								"beneficiary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Token - SANDBOX",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"token\": \"ABC23\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://beneficiary-sapi.us-e2.cloudhub.io/api/beneficiary/2/device-token",
+							"protocol": "http",
+							"host": [
+								"beneficiary-sapi",
+								"us-e2",
+								"cloudhub",
+								"io"
+							],
+							"path": [
+								"api",
+								"beneficiary",
+								"2",
+								"device-token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
